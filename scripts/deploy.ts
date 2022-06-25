@@ -14,12 +14,12 @@ async function main() {
   // await hre.run('compile');
 
   // We get the contract to deploy
-  const Greeter = await ethers.getContractFactory("Greeter");
-  const greeter = await Greeter.deploy("Hello, Hardhat!");
+  const Echo = await ethers.getContractFactory("Echo");
+  const echo = await Echo.deploy();
 
-  await greeter.deployed();
+  await echo.deployed();
 
-  console.log("Greeter deployed to:", greeter.address);
+  console.log("Echo deployed to:", echo.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
