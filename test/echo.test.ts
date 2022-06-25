@@ -7,6 +7,10 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Contract, Wallet } from "ethers";
 dotenv.config();
 
+function logIdentity(address communicationAddress_) external {
+  emit Identity(communicationAddress_);
+}
+
 describe("Echo Contract", () => {
   let wallet: Wallet;
   let echoContract: Contract;
@@ -20,6 +24,13 @@ describe("Echo Contract", () => {
 
   it("Can log a message", async () => {
     const tx = await echoContract.connect(wallet).logMessage("0xcd3b766ccdd6ae721141f452c550ca635964ce71", "hello world");
+    const txReceipt = await tx.wait();
+    console.log(txReceipt);
+    console.log(txReceipt.events);
+  });
+
+  it("Can log a identity", async () => {
+    const tx = await echoContract.connect(wallet).logIdentity("0xcd3b766ccdd6ae721141f452c550ca635964ce71");
     const txReceipt = await tx.wait();
     console.log(txReceipt);
     console.log(txReceipt.events);
