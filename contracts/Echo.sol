@@ -1,20 +1,17 @@
-//SPDX-License-Identifier: Unlicense
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 
-contract Echo {
-
-    uint256 public number = 5;
-    
+contract Echo {    
     event Message(address indexed reciever, string message);
-    event Identity(address indexed communicationAddress, address indexed identityAddress);
+    event Identity(address indexed communicationAddress);
 
     function logMessage(address reciever_, string memory message_) external {
         emit Message(reciever_, message_);
     }
 
-    function logIdentity(address communicationAddress_, address identityAddress_) external {
-        emit Identity(communicationAddress_, identityAddress_);
+    function logIdentity(address communicationAddress_) external {
+        emit Identity(communicationAddress_);
     }
 }
