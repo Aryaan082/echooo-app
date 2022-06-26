@@ -1,4 +1,8 @@
-import '@rainbow-me/rainbowkit/styles.css'
+import {React, useState, useEffect} from "react";
+import EchoJSON from "../../artifacts/contracts/Echo.sol/Echo.json";
+import {Contract, ethers} from "ethers";
+import EthCrypto from "eth-crypto";
+import '@rainbow-me/rainbowkit/styles.css';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import {
   getDefaultWallets,
@@ -9,6 +13,11 @@ import {
   configureChains,
   createClient,
   WagmiConfig,
+  useAccount,
+  useEnsAvatar,
+  useEnsName,
+  useConnect,
+  useDisconnect
 } from 'wagmi';
 import { alchemyProvider } from 'wagmi/providers/alchemy';
 import { publicProvider } from 'wagmi/providers/public';
@@ -36,7 +45,43 @@ const wagmiClient = createClient({
   provider
 })
 
+const contractAddress = "0xB149b57dD9EF08A9728612dAE867c2e602480D21";
+const echoContract = new ethers.Contract(
+  contractAddress,
+  EchoJSON.abi,
+  provider
+);
+
+const createCommunicationAddress = async (account) => {
+  const ethWallet = EthCrypto.createIdentity();
+  const tx = await echoContract
+    .connect(account)
+    .logIdentity(ethWallet.publicKey);
+  await tx.wait();
+  return ethWallet.privateKey;
+}
+
+const sendMessage = async (message, bIdentity) => {
+
+}
+
+const receiveMessage = async () => {
+
+}
 export default function App() {
+  const [commPrivateKey, setCommPrivateKey] = useState(JSON.parse(localStorage.getItem("commPrivateKey") || ""));
+  const { data: account } = useAccount();
+  const { ensAvatar } = useEnsAvatar({ addressOrName: account?.address });
+  const { data: ensName } = useEnsName({ address: account?.address });
+  const { connect, connectors, error, isConnecting, pendingConnector } = useConnect();
+  const { disconnect } = useDisconnect();
+  
+  useEffect(() => {
+    // const newCommPrivateKey = generateCommunicationKeys(account);
+    // setCommPrivateKey(newCommPrivateKey);
+    localStorage.setItem("commPrivateKey", JSON.stringify(commPrivateKey));
+  }, [commPrivateKey]);
+
   return (
     <div className='flex flex-row h-[100vh] bg-gradient-bg' style={{backgroundRepeat: "no-repeat"}}>
       <div className='flex flex-col w-[25%] border-r-[2px] border-slate-300'>
@@ -61,6 +106,9 @@ export default function App() {
             <img src={textBubble}></img>
           </div>
         </div>
+      </div>
+      <div>
+        {"test"}
       </div>
     </div>
   );
