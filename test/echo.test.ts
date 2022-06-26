@@ -32,7 +32,7 @@ describe("Echo Contract", () => {
   it("Can log a message", async () => {
     const tx = await echoContract
       .connect(wallet)
-      .logMessage("0xcd3b766ccdd6ae721141f452c550ca635964ce71", "hello world", { gasLimit: 10000000 });
+      .logMessage("0xcd3b766ccdd6ae721141f452c550ca635964ce71", "hello world");
     const txReceipt = await tx.wait();
     console.log(txReceipt);
     console.log(txReceipt.events);
@@ -41,13 +41,41 @@ describe("Echo Contract", () => {
   it("Can log a identity", async () => {
     const tx = await echoContract
       .connect(wallet)
-      .logIdentity("0xcd3b766ccdd6ae721141f452c550ca635964ce71", { gasLimit: 10000000 });
+      .logIdentity("0xcd3b766ccdd6ae721141f452c550ca635964ce71");
     const txReceipt = await tx.wait();
     console.log(txReceipt);
     console.log(txReceipt.events);
   });
 
-  it("Test utf8byte decryption", async function () {
+  it.only("Can encrypt and decrypt message", async () => {
+    const ethWallet2 = EthCrypto.createIdentity();
+
+    let tx = await echoContract.connect(wallet).logIdentity(ethWallet2.address);
+    let txReceipt = await tx.wait();
+
+    message = "We're going to win everything!!";
+    const messageEncrypted = await EthCrypto.encryptWithPublicKey(
+      ethWallet2.publicKey,
+      message
+    );
+    
+    console.log("message", message);
+    const messageEncryptedString = await EthCrypto.cipher.stringify(
+      messageEncrypted
+    );
+    console.log("message encrypted", messageEncryptedString);
+    tx = await echoContract.connect(wallet).logMessage(ethWallet2.address, messageEncryptedString);
+    txReceipt = await tx.wait();
+    
+    console.log(txReceipt.events![0].args!.message);
+    expect(
+      await EthCrypto.decryptWithPrivateKey(
+        ethWallet2.privateKey,
+        EthCrypto.cipher.parse(txReceipt.events![0].args!.message))
+      ).equals(message);
+  });
+
+  it("Test utf8byte decryption", async () => {
     message = "Hi im person one";
 
     byteMessage = ethers.utils.toUtf8Bytes(message);
@@ -57,19 +85,19 @@ describe("Echo Contract", () => {
     expect(message).equals(originalMessage);
   });
 
-  it("Test encrypting then decrypting messages", async function () {
-    const ethWallet: any = await generateWallet(Currency.ETH, true);
-
+  it("Test encrypting then decrypting messages", async () => {
     const ethWallet2 = EthCrypto.createIdentity();
 
+    message = "world hello!!";
     const messageEncrypted = await EthCrypto.encryptWithPublicKey(
       ethWallet2.publicKey,
       message
     );
-
+    console.log("message", message);
     const messageEncryptedString = await EthCrypto.cipher.stringify(
       messageEncrypted
     );
+    console.log("message encrypted", messageEncryptedString);
 
     expect(
       await EthCrypto.decryptWithPrivateKey(
