@@ -27,7 +27,7 @@ import textBubble from './assets/text-bubble.svg';
 import matic from './assets/matic.svg';
 
 const { chains, provider } = configureChains(
-  [chain.mainnet, chain.polygon, chain.optimism],
+  [chain.polygon, chain.optimism],
   [
     alchemyProvider({ alchemyId: process.env.ALCHEMY_ID }),
     publicProvider()
@@ -83,19 +83,17 @@ export default function App() {
   }, [commPrivateKey]);
 
   return (
-    <div className='flex flex-row h-[100vh] bg-gradient-bg' style={{backgroundRepeat: "no-repeat"}}>
-      <div className='flex flex-col w-[25%] border-r-[2px] border-slate-300'>
-        
+    <div className='flex flex-row h-[100vh] w-[100vw] bg-gradient-bg' style={{backgroundRepeat: "round"}}>
+      <div className='flex flex-col justify-center text-center w-[30%] border-r-[2px] border-slate-300'>
+        <code>
+        You have no chats, anon <br/>
+              ¯\_(ツ)_/¯
+        </code>
       </div>
-      <div className='flex flex-row items-center justify-between px-[20px] py-[40px] h-[100px]'>
+      <div className='flex flex-row justify-between items-center px-[20px] py-[40px] h-[100px] w-full'>
         <img className='h-[30px]' src={logo}>
         </img>
         <div className='flex flex-row gap-4'>
-          <div className='flex flex-row gap-[10px] bg-sky-100 px-[15px] py-[10px] rounded-md text-black font-bold'>
-            <img src={matic}>
-            </img>
-            Polygon
-          </div>
           <WagmiConfig client={wagmiClient}>
             <RainbowKitProvider chains={chains}>
               <ConnectButton />
