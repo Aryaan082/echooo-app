@@ -18,7 +18,7 @@ import textBubble from './assets/text-bubble.svg';
 import matic from './assets/matic.svg';
 
 const { chains, provider } = configureChains(
-  [chain.mainnet, chain.polygon, chain.optimism],
+  [chain.polygon, chain.optimism],
   [
     alchemyProvider({ alchemyId: process.env.ALCHEMY_ID }),
     publicProvider()
