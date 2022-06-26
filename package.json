@@ -38,5 +38,9 @@
   },
   "scripts": {
     "test": "nodemon -x 'npx hardhat test' -w contracts -w test -e js,ts,sol"
+  },
+  "dependencies": {
+    "@tatumio/tatum": "^1.35.8",
+    "eth-crypto": "^2.3.0"
   }
 }
