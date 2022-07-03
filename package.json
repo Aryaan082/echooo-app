@@ -45,6 +45,7 @@
     "@web3-onboard/injected-wallets": "^2.0.11",
     "@web3-onboard/react": "^2.2.1",
     "eth-crypto": "^2.3.0",
-    "stream": "^0.0.2"
+    "stream": "^0.0.2",
+    "wagmi": "^0.5.5"
   }
 }
