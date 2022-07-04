@@ -1,8 +1,7 @@
-import { WagmiConfig, createClient } from "wagmi";
 import Modal from "react-modal";
 import React from "react";
 
-import WalletOptions from "./WalletOptions";
+import WalletConnector from "./WalletConnector";
 
 const modalStyles = {
   content: {
@@ -18,18 +17,15 @@ const modalStyles = {
   },
 };
 
-export default function ConnectionModal({
-  openModalConnect,
-  toggleOpenModalConnect,
-}) {
+export default function WalletModal({ openModal, toggleOpenModal }) {
   return (
     <Modal
-      isOpen={openModalConnect}
-      onRequestClose={toggleOpenModalConnect}
+      isOpen={openModal}
+      onRequestClose={toggleOpenModal}
       style={modalStyles}
     >
       <div className="flex flex-col gap-4">
-        <WalletOptions />
+        <WalletConnector />
       </div>
     </Modal>
   );

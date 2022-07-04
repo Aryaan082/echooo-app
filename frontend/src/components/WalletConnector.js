@@ -5,9 +5,8 @@ import metamask from "../assets/metamask-wallet-logo.png";
 import coinbase from "../assets/coinbase-wallet-logo.svg";
 import walletConnect from "../assets/wallet-connect-wallet-logo.svg";
 
-export default function WalletOptions() {
-  const { connect, connectors, error, isLoading, pendingConnector } =
-    useConnect();
+export default function WalletConnector() {
+  const { connect, connectors, error, isLoading } = useConnect();
 
   const walletOptionLogos = {
     metaMask: metamask,

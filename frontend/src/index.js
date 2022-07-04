@@ -4,8 +4,13 @@ import "./index.css";
 import App from "./components/App";
 import reportWebVitals from "./reportWebVitals";
 
-import { WagmiConfig, createClient } from "wagmi";
-import { defaultChains, configureChains } from "wagmi";
+import {
+  WagmiConfig,
+  createClient,
+  Chain,
+  chain,
+  configureChains,
+} from "wagmi";
 import { alchemyProvider } from "wagmi/providers/alchemy";
 import { publicProvider } from "wagmi/providers/public";
 import { CoinbaseWalletConnector } from "wagmi/connectors/coinbaseWallet";
@@ -15,10 +20,28 @@ import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
 
 const alchemyId = process.env.ALCHEMY_ID;
 
-const { chains, provider, webSocketProvider } = configureChains(defaultChains, [
-  alchemyProvider({ alchemyId }),
-  publicProvider(),
-]);
+const avalancheChain: Chain = {
+  id: 43_114,
+  name: "Avalanche",
+  network: "avalanche",
+  nativeCurrency: {
+    decimals: 18,
+    name: "Avalanche",
+    symbol: "AVAX",
+  },
+  rpcUrls: {
+    default: "https://api.avax.network/ext/bc/C/rpc",
+  },
+  blockExplorers: {
+    default: { name: "SnowTrace", url: "https://snowtrace.io" },
+  },
+  testnet: false,
+};
+
+const { chains, provider, webSocketProvider } = configureChains(
+  [avalancheChain, chain.optimism],
+  [alchemyProvider({ alchemyId }), publicProvider()]
+);
 
 const client = createClient({
   autoConnect: true,
