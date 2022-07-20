@@ -3,20 +3,28 @@ import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 
 import WalletModal from "./WalletModal";
 import ChainSelectorModal from "./ChainSelectorModal";
+import NewChatModal from "./NewChatModal";
 import MessagingPage from "./MessagingPage";
 
 import gradientOne from "../assets/gradient-one.svg";
 import gradientTwo from "../assets/gradient-two.svg";
 import logo from "../assets/echooo.svg";
-import "../App.css";
 
 export default function App() {
   const [connectedWallet, setConnectedWallet] = React.useState(false);
   const [chainSelect, setChainSelect] = React.useState(false);
   const [openModalConnect, setOpenModalConnect] = React.useState(false);
+  const [openNewChatModal, setOpenNewChatModal] = React.useState(false);
+  const [communicationSetup, setCommunicationSetup] = React.useState(false);
+  const [newChatAddress, setNewChatAddress] = React.useState("");
+  const [activeReceiver, setActiveReceiver] = React.useState(0);
+  const [chatAddresses, setChatAddresses] = React.useState([]);
 
   const toggleOpenModalConnect = () => setOpenModalConnect(!openModalConnect);
   const toggleOpenModalChainSelect = () => setChainSelect(!chainSelect);
+  const toggleOpenNewChatModal = () => setOpenNewChatModal(!openNewChatModal);
+  const toggleCommunicationSetup = () =>
+    setCommunicationSetup(!communicationSetup);
 
   const { chain } = useNetwork();
   const { chains, error, isLoading, pendingChainId, switchNetwork } =
@@ -32,9 +40,9 @@ export default function App() {
     onConnect() {
       setConnectedWallet(true);
       setOpenModalConnect(false);
-      if (!chains.map((value) => value.id).includes(chain.id)) {
-        switchNetwork?.(chains[0].id);
-      }
+      // if () {
+      //   switchNetwork?.(chains[0].id);
+      // }
     },
   });
 
@@ -58,6 +66,17 @@ export default function App() {
         openModal={openModalConnect}
         toggleOpenModal={toggleOpenModalConnect}
       />
+      <NewChatModal
+        openModal={openNewChatModal}
+        toggleOpenModal={toggleOpenNewChatModal}
+        toggleOpenNewChatModal={toggleOpenNewChatModal}
+        communicationSetup={communicationSetup}
+        toggleCommunicationSetup={toggleCommunicationSetup}
+        newChatAddress={newChatAddress}
+        setNewChatAddress={setNewChatAddress}
+        chatAddresses={chatAddresses}
+        setChatAddresses={setChatAddresses}
+      />
       {!connectedWallet ? (
         <div className="flex justify-center items-center h-[100vh]">
           <div className="flex justify-center h-[290px] w-[630px] border-[4px] border-[#333333] rounded-2xl bg-white">
@@ -76,6 +95,11 @@ export default function App() {
       ) : (
         <MessagingPage
           toggleOpenModalChainSelect={toggleOpenModalChainSelect}
+          communicationSetup={communicationSetup}
+          toggleCommunicationSetup={toggleCommunicationSetup}
+          toggleOpenNewChatModal={toggleOpenNewChatModal}
+          chatAddresses={chatAddresses}
+          activeReceiver={activeReceiver}
         />
       )}
     </div>

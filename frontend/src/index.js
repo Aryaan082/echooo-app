@@ -20,7 +20,7 @@ import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
 
 const alchemyId = process.env.ALCHEMY_ID;
 
-const avalancheChain: Chain = {
+const avalancheChain = {
   id: 43_114,
   name: "Avalanche",
   network: "avalanche",
@@ -39,7 +39,7 @@ const avalancheChain: Chain = {
 };
 
 const { chains, provider, webSocketProvider } = configureChains(
-  [avalancheChain, chain.optimism],
+  [avalancheChain, chain.mainnet],
   [alchemyProvider({ alchemyId }), publicProvider()]
 );
 
