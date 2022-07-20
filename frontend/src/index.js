@@ -4,6 +4,7 @@ import "./index.css";
 import App from "./components/App";
 import reportWebVitals from "./reportWebVitals";
 
+import {ChakraProvider} from "@chakra-ui/react";
 import {
   WagmiConfig,
   createClient,
@@ -74,9 +75,11 @@ const client = createClient({
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <WagmiConfig client={client}>
-      <App />
-    </WagmiConfig>
+    <ChakraProvider>
+      <WagmiConfig client={client}>
+        <App />
+      </WagmiConfig>
+    </ChakraProvider>
   </React.StrictMode>
 );
 
