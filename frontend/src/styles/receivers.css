@@ -1,0 +1,17 @@
+.Receivers {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 50px;
+  gap: 20px;
+}
+
+.Receivers #active {
+  border: 3px solid;
+  border-color: #333333;
+}
+
+.Receivers #inactive {
+  border: 3px solid;
+  border-color: #3333330a;
+}
