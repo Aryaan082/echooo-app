@@ -1,0 +1,13 @@
+type Identity @entity {
+  id: ID!
+  communicationAddress: String! # string
+  timestamp: BigInt!
+  from: Bytes!
+}
+
+type Message @entity {
+  id: ID!
+  reciever: Bytes! # address
+  message: String! # string
+  timestamp: BigInt!
+}
