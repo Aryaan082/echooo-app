@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useAccount, useDisconnect, useNetwork, useSigner, useSwitchNetwork } from "wagmi";
+import {ethers} from "ethers";
 import EthCrypto from "eth-crypto";
 import { createClient } from "urql";
-import 'isomorphic-unfetch'; // required for urql: https://github.com/FormidableLabs/urql/issues/283
+import EchoJSON from "../artifacts/contracts/Echo.sol/Echo.json";
 
+import 'isomorphic-unfetch'; // required for urql: https://github.com/FormidableLabs/urql/issues/283
 
 import logout from "../assets/logout-icon.svg";
 import textBubble from "../assets/text-bubble-icon.svg";
@@ -23,7 +25,18 @@ const graphClient = createClient({
   url: GRAPH_API_URL,
 });
 
-const ChatBox = ({ receiverAddress }) => {
+const initConnection = async () => {
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const contractAddress = "0x9BAcd26D33175987B5807107a73bb8D6f69225d9";
+  const echoContract = await new ethers.Contract(
+    contractAddress,
+    EchoJSON.abi,
+    provider
+  );
+  return echoContract;
+}
+
+const ChatBox = ({ receiverAddress, messages, setMessages}) => {
   return (
     <>
       {/* Reciever */}
@@ -63,47 +76,61 @@ const ChatBox = ({ receiverAddress }) => {
   )
 }
 
-const SendMessages = ({receiverAddress}) => {
-  // [receiverCommAddress, setReceiverCommAddress] = useState("");
-  // const send
-  // const handleSendMessage = async () => {
+const SendMessages = ({receiverAddress, messages, setMessages}) => {
+  // TODO: convert this to backend API call b/c the promises can block the thread not good
+  const [message, setMessage] = useState("");
 
-  // }
-  // useEffect(() => {
+  const handleSubmitMessage = async (e) => {
+    e.preventDefault();
 
-  // })
-  // const message = "this is a very very secret message ...";
-  //   const BIdentity = wallet.address;
-  //   const identitiesQuery = `
-  //     query {
-  //       identities(where: {from: "${BIdentity}"}, first: 1, orderBy: timestamp, orderDirection: desc) {
-  //         communicationAddress,
-  //         timestamp     
-  //       }
-  //     }
-  //   `
-  //   const data = await graphClient.query(identitiesQuery).toPromise();
-  //   const communicationAddress = data.data.identities[0].communicationAddress;
-  //   console.log("communication address >>>", communicationAddress);
-  //   const messageEncrypted = await EthCrypto.encryptWithPublicKey(
-  //     communicationAddress,
-  //     message
-  //   );
-  //   const messageEncryptedString = await EthCrypto.cipher.stringify(
-  //     messageEncrypted
-  //   );
-    // console.log("message encrypted >>>", messageEncryptedString);
-    // await echoContract.connect(wallet).logMessage(BIdentity, messageEncryptedString);
+    const provider = await new ethers.providers.Web3Provider(window.ethereum);
+    const signer = await provider.getSigner();
+    const echoContract = await initConnection();
+    const senderMessage = await message;
+    const BIdentity = await receiverAddress;
+
+    // TODO: If user has no communication address, need to create it on the fly for them... 
+    const identitiesQuery = `
+      query {
+        identities(where: {from: "${BIdentity}"}, first: 1, orderBy: timestamp, orderDirection: desc) {
+          communicationAddress,
+          timestamp     
+        }
+      }
+    `
+    const data = await graphClient.query(identitiesQuery).toPromise();
+    const communicationAddress = await data.data.identities[0].communicationAddress;
+    
+    // console.log("gql data>>>", data)
+    // console.log("communication address >>>", communicationAddress);
+    // console.log("sender message", message);
+    
+    // TODO: variables are not being assigned -- need to figure this out to make encryption work
+    // const messageEncrypted = await EthCrypto.encryptWithPublicKey(
+    //   communicationAddress,
+    //   senderMessage
+    // );
+    // const messageEncryptedString = await EthCrypto.cipher.stringify(
+    //   messageEncrypted
+    // );
+
+    // console.log("message encrypted >>>", senderMessage);
+    await echoContract.connect(signer).logMessage(BIdentity, senderMessage);
+    const newMessage = {from: signer.address, to: receiverAddress, message: senderMessage}
+    const newMessages = [...messages, newMessage]
+    setMessages(newMessages)
+    setMessage("");
+  }
 
   return (
     <>
       {/* Send message */}
-      <form className="flex flex-row align-center justify-center w-full gap-4" style={{ height: "calc(15vh - 100px}" }}>
+      <form onSubmit={handleSubmitMessage} className="flex flex-row align-center justify-center w-full gap-4" style={{ height: "calc(15vh - 100px}" }}>
         <div className="ml-2 w-[85%]">
-          <input type="text" id="sender_message" class="shadow-md bg-gray-50 border-[1px] rounded-[20px] border-[rgba(241,245,249,0.7)] text-gray-900 text-md focus:ring-blue-200 focus:border-blue-200 w-full p-4" placeholder="Type your message..." required />
+          <input onChange={e => setMessage(e.target.value)} value={message} type="text" id="sender_message" class="shadow-md bg-gray-50 border-[1px] rounded-[20px] border-[rgba(241,245,249,0.7)] text-gray-900 text-md focus:ring-blue-200 focus:border-blue-200 w-full p-4" placeholder="Type your message..." required />
         </div>
         <div className="mr-2 w-[15%]">
-          <button type="button" class="shadow-md h-full text-white bg-blue-500 border-[1px] rounded-[20px] border-[rgba(241,245,249,0.7)] hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium text-md w-full px-3 py-2.5 text-center">Send ✉️</button>
+          <button type="submit" class="shadow-md h-full text-white bg-blue-500 border-[1px] rounded-[20px] border-[rgba(241,245,249,0.7)] hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium text-md w-full px-3 py-2.5 text-center">Send ✉️</button>
         </div>
       </form>
     </>
@@ -126,11 +153,71 @@ export default function MessagingPage({
   const { disconnect } = useDisconnect();
   const { chain } = useNetwork();
   const { chains, error, isLoading, pendingChainId, switchNetwork } = useSwitchNetwork();
+  const [messages, setMessages] = useState([])
 
   const handleActiveReciever = (e, index, address) => {
     setActiveIndex(index);
     setActiveReceiver(address);
   }
+  
+  useEffect(() => {
+    // TODO: cache messages
+    const getMessagesAsync = async () => {
+      const provider = await new ethers.providers.Web3Provider(window.ethereum);
+      const signer = await provider.getSigner();
+       
+      const BPublicCommuncationAddress = signer.address;
+      const BPrivateCommunicationAddress = JSON.parse(localStorage.getItem("private-communication-address"));
+      const identitiesTimestampQuery = `
+        query {
+          identities(
+            from: "${BPublicCommuncationAddress}"
+            first: 1
+            orderBy: timestamp
+            orderDirection: desc
+          ) {
+            communicationAddress
+            timestamp
+          }
+        }
+      `
+      const dataIdentity = await graphClient.query(identitiesTimestampQuery).toPromise();
+      const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
+      const dataIdentityCommAddress = dataIdentity.data.identities[0].communicationAddress; // TODO: Use this to check that this address matches our comm address
+      
+      const messagesQuery = `
+        query {
+          messages(where: {timestamp_gte: "${dataIdentityTimestamp}"}, from: "${BPrivateCommunicationAddress}", orderBy: timestamp, orderDirection: desc) {
+            message,
+            timestamp,
+            reciever     
+          }
+        }
+      `
+      const dataMessages = await graphClient.query(messagesQuery).toPromise();
+      // const dataMessagesParsed = dataMessages.data.messages;
+      console.log("dataMessages", dataMessages)
+      let messages = []
+      for (let idx = 0; idx < dataMessages.length; idx++) {
+        let message = await dataMessages[idx].message;
+        await message.push({from: BPublicCommuncationAddress});
+        console.log(message)
+        await messages.push(message);
+        // const decryptedMessage = await EthCrypto.decryptWithPrivateKey(
+        //   BPrivateCommunicationAddress,
+        //   EthCrypto.cipher.parse(message)
+        // );
+        // console.log(`Decrypted message ${idx} >>>`, decryptedMessage);
+      }
+      console.log("fetched messages", await messages); 
+      setMessages(messages);
+      return await messages
+    };
+    if (activeReceiverAddress !== "") {
+      getMessagesAsync(); 
+      
+    }
+  }, [activeReceiverAddress]);
 
   return (
     <div
@@ -218,8 +305,8 @@ export default function MessagingPage({
         {/* Chat */}
         {
           chatAddresses.length > 0 ? <div className="flex flex-col w-full mt-5">
-            <ChatBox receiverAddress={activeReceiverAddress} />
-            <SendMessages />
+            <ChatBox messages={messages} setMessages={setMessages} receiverAddress={activeReceiverAddress} />
+            <SendMessages messages={messages} setMessages={setMessages} receiverAddress={activeReceiverAddress} />
           </div> : ""
         }
       </div>
