@@ -1,15 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { useAccount, useDisconnect, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useDisconnect, useNetwork, useSigner, useSwitchNetwork } from "wagmi";
+import EthCrypto from "eth-crypto";
+import { createClient } from "urql";
+import 'isomorphic-unfetch'; // required for urql: https://github.com/FormidableLabs/urql/issues/283
+
+
 import logout from "../assets/logout-icon.svg";
 import textBubble from "../assets/text-bubble-icon.svg";
 import selectedAddressEllipse from "../assets/selected-address-ellipse.png";
 import continueIconColor from "../assets/continue-icon-color.svg";
 import continueIcon from "../assets/continue-icon.svg";
 import dropdown from "../assets/dropdown-icon.svg";
+// import identity from "../assets/identity-card.svg";
 import logo from "../assets/echooo.svg";
 import errorIcon from "../assets/error-icon.svg";
 import avalanche from "../assets/avalanche-icon.svg";
 import "../styles/receivers.css";
+
+
+const GRAPH_API_URL = "https://api.thegraph.com/subgraphs/name/mtwichan/echo";
+const graphClient = createClient({
+  url: GRAPH_API_URL,
+});
 
 const ChatBox = ({ receiverAddress }) => {
   return (
@@ -28,7 +40,7 @@ const ChatBox = ({ receiverAddress }) => {
         {/* Sender */}
         <div className="pl-3">
           <div className="flex flex-row gap-4">
-            <div className="bg-gray-50 p-4 rounded-lg border-[2px] border-[rgba(241,245,249)]">sup, anon!</div>
+            <div className="bg-gray-50 p-4 rounded-lg border-[2px] border-[rgba(241,245,249)]">Your anon chats</div>
           </div>
           <div className="pt-3 text-xs text-gray-500 italic">
             {`${receiverAddress.substring(0, 4)}...${receiverAddress.substring(38)}, 04:20 am`}
@@ -51,7 +63,38 @@ const ChatBox = ({ receiverAddress }) => {
   )
 }
 
-const SendMessages = (props) => {
+const SendMessages = ({receiverAddress}) => {
+  // [receiverCommAddress, setReceiverCommAddress] = useState("");
+  // const send
+  // const handleSendMessage = async () => {
+
+  // }
+  // useEffect(() => {
+
+  // })
+  // const message = "this is a very very secret message ...";
+  //   const BIdentity = wallet.address;
+  //   const identitiesQuery = `
+  //     query {
+  //       identities(where: {from: "${BIdentity}"}, first: 1, orderBy: timestamp, orderDirection: desc) {
+  //         communicationAddress,
+  //         timestamp     
+  //       }
+  //     }
+  //   `
+  //   const data = await graphClient.query(identitiesQuery).toPromise();
+  //   const communicationAddress = data.data.identities[0].communicationAddress;
+  //   console.log("communication address >>>", communicationAddress);
+  //   const messageEncrypted = await EthCrypto.encryptWithPublicKey(
+  //     communicationAddress,
+  //     message
+  //   );
+  //   const messageEncryptedString = await EthCrypto.cipher.stringify(
+  //     messageEncrypted
+  //   );
+    // console.log("message encrypted >>>", messageEncryptedString);
+    // await echoContract.connect(wallet).logMessage(BIdentity, messageEncryptedString);
+
   return (
     <>
       {/* Send message */}
@@ -67,22 +110,28 @@ const SendMessages = (props) => {
   )
 }
 
-
-// shadow-[-5px_5px__0px_#333333]
-
 export default function MessagingPage({
   toggleOpenModalChainSelect,
   communicationSetup,
+  toggleOpenCommAddressModal,
   toggleOpenNewChatModal,
   chatAddresses,
-  activeReceiver,
+  activeReceiverAddress,
+  setActiveReceiver,
+  activeIndex,
+  setActiveIndex
 }) {
-  const [receiverAddress, setReceiverAddress] = useState("0xE8F6EcAa58DCd56013C1013Fd167Edf4dB3e5C96");
   const { address } = useAccount();
+  const { signer } = useSigner();
   const { disconnect } = useDisconnect();
   const { chain } = useNetwork();
   const { chains, error, isLoading, pendingChainId, switchNetwork } = useSwitchNetwork();
-  // const reciever = "0xE8F6EcAa58DCd56013C1013Fd167Edf4dB3e5C96";
+
+  const handleActiveReciever = (e, index, address) => {
+    setActiveIndex(index);
+    setActiveReceiver(address);
+  }
+
   return (
     <div
       className="flex flex-row h-[100vh] w-[100vw] bg-gradient-bg"
@@ -91,20 +140,20 @@ export default function MessagingPage({
       {communicationSetup ? (
         <>
           <div className="border-r-[3px] border-[#333333] border-opacity-10 w-[30%] pt-[4vh]">
-            <code className="text-xl font-semibold pl-[2vw]">Chats list</code>
+            <code className="text-xl font-semibold pl-[2vw]">Your anon chats</code>
             <ul className="Receivers">
-              {chatAddresses.map((item, index) => {
+              {chatAddresses.map((address, index) => {
                 return (
                   <button
                     className="w-[80%] flex flex-row justify-between items-center px-4 py-4 font-bold rounded-[50px]"
                     key={index}
-                    id={activeReceiver === index ? "active" : "inactive"}
+                    id={index === activeIndex ? "active" : "inactive"}
+                    onClick={event => handleActiveReciever(event, index, address)}
                   >
-                    {console.log(activeReceiver)}
-                    {console.log(index)}
+                    {console.log("index", index)}
                     <code className="flex flex-row items-center gap-4">
                       <img src={selectedAddressEllipse}></img>
-                      {`${item.substring(0, 4)}...${item.substring(38)}`}
+                      {`${address.substring(0, 4)}...${address.substring(38)}`}
                     </code>
                     <img src={continueIconColor}></img>
                   </button>
@@ -151,21 +200,29 @@ export default function MessagingPage({
               <img src={logout}></img>
             </button>
             <button
+              className="flex flex-row justify-center items-center gap-[15px] px-5 py-3 bg-[rgb(44,157,218)] text-white font-bold rounded-[30px] border-[3px] border-[#333333]"
+              onClick={toggleOpenCommAddressModal}
+            >
+              Change keys
+              {/* <img className="h-[20px] w-[20px]" src={identity}></img> */}
+            </button>   
+            <button
               className="flex flex-row justify-center items-center gap-[15px] px-5 py-3 bg-gradient-to-r from-[#00FFD1] to-[#FF007A] via-[#9b649c] text-white font-bold rounded-[30px] border-[3px] border-[#333333]"
               onClick={toggleOpenNewChatModal}
             >
               Start new chat
               <img src={textBubble}></img>
-            </button>
+            </button>         
           </div>
         </div>
         {/* Chat */}
-        <div className="flex flex-col w-full mt-5">
-          <ChatBox receiverAddress={receiverAddress} />
-          <SendMessages />
-        </div>
+        {
+          chatAddresses.length > 0 ? <div className="flex flex-col w-full mt-5">
+            <ChatBox receiverAddress={activeReceiverAddress} />
+            <SendMessages />
+          </div> : ""
+        }
       </div>
-
     </div>
   );
 }

@@ -1,39 +1,55 @@
-import React from "react";
+// import * as dotenv from "dotenv";
+import React, {useEffect, useState} from "react";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
-
 import WalletModal from "./WalletModal";
 import ChainSelectorModal from "./ChainSelectorModal";
 import NewChatModal from "./NewChatModal";
 import MessagingPage from "./MessagingPage";
+import CommAddressModal from "./CommAddressModal";
 
 import gradientOne from "../assets/gradient-one.svg";
 import gradientTwo from "../assets/gradient-two.svg";
 import logo from "../assets/echooo.svg";
 
-export default function App() {
-  const [connectedWallet, setConnectedWallet] = React.useState(false);
-  const [chainSelect, setChainSelect] = React.useState(false);
-  const [openModalConnect, setOpenModalConnect] = React.useState(false);
-  const [openNewChatModal, setOpenNewChatModal] = React.useState(false);
-  const [communicationSetup, setCommunicationSetup] = React.useState(false);
-  const [newChatAddress, setNewChatAddress] = React.useState("");
-  const [activeReceiver, setActiveReceiver] = React.useState(0);
-  const [chatAddresses, setChatAddresses] = React.useState([]);
+// dotenv.config();
 
+export default function App() {
+  const [connectedWallet, setConnectedWallet] = useState(false);
+  const [chainSelect, setChainSelect] = useState(false);
+  const [openModalConnect, setOpenModalConnect] = useState(false);
+  const [openNewChatModal, setOpenNewChatModal] = useState(false);
+  const [openCommAddressModal, setOpenCommAddressModal] = useState(false);
+  const [communicationSetup, setCommunicationSetup] = useState(false);
+  const [newChatAddress, setNewChatAddress] = useState("");
+  const [activeReceiverAddress, setActiveReceiver] = useState("");
+  const [chatAddresses, setChatAddresses] = useState([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [communicationAddress, setCommunicationAddress] = useState(
+    JSON.parse(localStorage.getItem("public-communication-address")) || ""
+  );
+
+  // useEffect(() => {    
+  //   if (JSON.parse(localStorage.getItem("public-communication-address")) === null) {
+  //     const publicKey = async () => {return await createCommunicationAddress()};
+  //     setCommunicationAddress(publicKey);
+  //   }    
+  // }, [])
+  // console.log("public address >>>", localStorage.getItem("public-communication-address"))
+  // console.log("communicationAddress", communicationAddress)
+  
   const toggleOpenModalConnect = () => setOpenModalConnect(!openModalConnect);
   const toggleOpenModalChainSelect = () => setChainSelect(!chainSelect);
   const toggleOpenNewChatModal = () => setOpenNewChatModal(!openNewChatModal);
-  const toggleCommunicationSetup = () =>
-    setCommunicationSetup(!communicationSetup);
+  const toggleOpenCommAddressModal = () => setOpenCommAddressModal(!openCommAddressModal)
 
+  const toggleCommunicationSetup = () => setCommunicationSetup(!communicationSetup);
   const { chain } = useNetwork();
-  const { chains, error, isLoading, pendingChainId, switchNetwork } =
-    useSwitchNetwork();
+  const { chains, error, isLoading, pendingChainId, switchNetwork } = useSwitchNetwork();
 
   useAccount({
     onDisconnect() {
       setConnectedWallet(false);
-    },
+    }
   });
 
   useAccount({
@@ -66,6 +82,11 @@ export default function App() {
         openModal={openModalConnect}
         toggleOpenModal={toggleOpenModalConnect}
       />
+      <CommAddressModal
+        openModal={openCommAddressModal}
+        toggleOpenModal={toggleOpenCommAddressModal}
+        setCommunicationAddress={setCommunicationAddress}
+      />
       <NewChatModal
         openModal={openNewChatModal}
         toggleOpenModal={toggleOpenNewChatModal}
@@ -76,6 +97,8 @@ export default function App() {
         setNewChatAddress={setNewChatAddress}
         chatAddresses={chatAddresses}
         setChatAddresses={setChatAddresses}
+        setActiveReceiver={setActiveReceiver}
+        setActiveIndex={setActiveIndex}
       />
       {!connectedWallet ? (
         <div className="flex justify-center items-center h-[100vh]">
@@ -97,9 +120,13 @@ export default function App() {
           toggleOpenModalChainSelect={toggleOpenModalChainSelect}
           communicationSetup={communicationSetup}
           toggleCommunicationSetup={toggleCommunicationSetup}
+          toggleOpenCommAddressModal={toggleOpenCommAddressModal}
           toggleOpenNewChatModal={toggleOpenNewChatModal}
           chatAddresses={chatAddresses}
-          activeReceiver={activeReceiver}
+          activeIndex={activeIndex}
+          setActiveIndex={setActiveIndex}
+          activeReceiverAddress={activeReceiverAddress}
+          setActiveReceiver={setActiveReceiver}
         />
       )}
     </div>

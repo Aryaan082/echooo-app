@@ -26,6 +26,8 @@ export default function NewChatModal({
   setNewChatAddress,
   chatAddresses,
   setChatAddresses,
+  setActiveReceiver,
+  setActiveIndex
 }) {
   const handleChatInputChange = (e) => setNewChatAddress(e.target.value);
 
@@ -50,11 +52,15 @@ export default function NewChatModal({
                 ? () => {
                     toggleOpenModal();
                     setChatAddresses([...chatAddresses, newChatAddress]);
+                    setActiveReceiver(newChatAddress);
+                    setActiveIndex(chatAddresses.length);
                   }
                 : () => {
                     toggleCommunicationSetup();
                     toggleOpenModal();
                     setChatAddresses([...chatAddresses, newChatAddress]);
+                    setActiveReceiver(newChatAddress);
+                    setActiveIndex(chatAddresses.length);
                   }
             }
             disabled={newChatAddress.length !== 42}
