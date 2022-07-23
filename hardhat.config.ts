@@ -37,6 +37,10 @@ const config: HardhatUserConfig = {
       url: process.env.ROPSTEN_URL || "",
       accounts: [process.env.PRIVATE_KEY_ROPSTEN || ""]
     },
+    fuji: {
+      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      accounts: [process.env.PRIVATE_KEY_FUJI || ""],
+    },
     matic: {
       url: "https://rpc-mumbai.maticvigil.com",
       accounts: [process.env.PRIVATE_KEY_MATIC || ""],

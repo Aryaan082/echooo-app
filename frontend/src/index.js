@@ -21,8 +21,8 @@ import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
 const alchemyId = process.env.ALCHEMY_ID;
 
 const avalancheChain: Chain = {
-  id: 43_114,
-  name: "Avalanche",
+  id: 43113,
+  name: "Avalanche FUJI Testnet",
   network: "avalanche",
   nativeCurrency: {
     decimals: 18,
@@ -30,7 +30,7 @@ const avalancheChain: Chain = {
     symbol: "AVAX",
   },
   rpcUrls: {
-    default: "https://api.avax.network/ext/bc/C/rpc",
+    default: "https://api.avax-test.network/ext/bc/C/rpc",
   },
   blockExplorers: {
     default: { name: "SnowTrace", url: "https://snowtrace.io" },
@@ -39,7 +39,7 @@ const avalancheChain: Chain = {
 };
 
 const { chains, provider, webSocketProvider } = configureChains(
-  [avalancheChain, chain.polygonMumbai],
+  [avalancheChain, chain.polygonMumbai, chain.ropsten],
   [alchemyProvider({ alchemyId }), publicProvider()]
 );
 

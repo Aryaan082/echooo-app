@@ -13,10 +13,13 @@ import selectedAddressEllipse from "../assets/selected-address-ellipse.png";
 import continueIconColor from "../assets/continue-icon-color.svg";
 import continueIcon from "../assets/continue-icon.svg";
 import dropdown from "../assets/dropdown-icon.svg";
-// import identity from "../assets/identity-card.svg";
 import logo from "../assets/echooo.svg";
 import errorIcon from "../assets/error-icon.svg";
 import avalanche from "../assets/avalanche-icon.svg";
+import ethereum from "../assets/ethereum-icon.svg";
+import polygon from "../assets/polygon-icon.svg";
+import changeKeysIcon from "../assets/change-keys-icon.svg";
+import sendMessagesIcon from "../assets/send-icon.svg";
 import "../styles/receivers.css";
 
 
@@ -83,11 +86,11 @@ const SendMessages = ({receiverAddress, messages, setMessages}) => {
   const handleSubmitMessage = async (e) => {
     e.preventDefault();
 
-    const provider = await new ethers.providers.Web3Provider(window.ethereum);
-    const signer = await provider.getSigner();
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
     const echoContract = await initConnection();
-    const senderMessage = await message;
-    const BIdentity = await receiverAddress;
+    const senderMessage = message;
+    const BIdentity = receiverAddress;
 
     // TODO: If user has no communication address, need to create it on the fly for them... 
     const identitiesQuery = `
@@ -99,23 +102,17 @@ const SendMessages = ({receiverAddress, messages, setMessages}) => {
       }
     `
     const data = await graphClient.query(identitiesQuery).toPromise();
-    const communicationAddress = await data.data.identities[0].communicationAddress;
+    const communicationAddress = data.data.identities[0].communicationAddress;
     
-    // console.log("gql data>>>", data)
-    // console.log("communication address >>>", communicationAddress);
-    // console.log("sender message", message);
+    const messageEncrypted = await EthCrypto.encryptWithPublicKey(
+      communicationAddress,
+      senderMessage
+    );
+    const messageEncryptedString = EthCrypto.cipher.stringify(
+      messageEncrypted
+    );
     
-    // TODO: variables are not being assigned -- need to figure this out to make encryption work
-    // const messageEncrypted = await EthCrypto.encryptWithPublicKey(
-    //   communicationAddress,
-    //   senderMessage
-    // );
-    // const messageEncryptedString = await EthCrypto.cipher.stringify(
-    //   messageEncrypted
-    // );
-
-    // console.log("message encrypted >>>", senderMessage);
-    await echoContract.connect(signer).logMessage(BIdentity, senderMessage);
+    await echoContract.connect(signer).logMessage(BIdentity, messageEncryptedString);
     const newMessage = {from: signer.address, to: receiverAddress, message: senderMessage}
     const newMessages = [...messages, newMessage]
     setMessages(newMessages)
@@ -124,13 +121,14 @@ const SendMessages = ({receiverAddress, messages, setMessages}) => {
 
   return (
     <>
-      {/* Send message */}
       <form onSubmit={handleSubmitMessage} className="flex flex-row align-center justify-center w-full gap-4" style={{ height: "calc(15vh - 100px}" }}>
         <div className="ml-2 w-[85%]">
           <input onChange={e => setMessage(e.target.value)} value={message} type="text" id="sender_message" class="shadow-md bg-gray-50 border-[1px] rounded-[20px] border-[rgba(241,245,249,0.7)] text-gray-900 text-md focus:ring-blue-200 focus:border-blue-200 w-full p-4" placeholder="Type your message..." required />
         </div>
         <div className="mr-2 w-[15%]">
-          <button type="submit" class="shadow-md h-full text-white bg-blue-500 border-[1px] rounded-[20px] border-[rgba(241,245,249,0.7)] hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium text-md w-full px-3 py-2.5 text-center">Send ✉️</button>
+          <button type="submit" class="flex flex-row justify-center items-center gap-[10px] shadow-md h-full text-white bg-blue-500 border-[1px] rounded-[20px] border-[rgba(241,245,249,0.7)] hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium text-md w-full px-3 py-2.5 text-center">Send 
+            <img className="h-[15px] w-[15px]" src={sendMessagesIcon}></img>
+          </button>
         </div>
       </form>
     </>
@@ -149,12 +147,16 @@ export default function MessagingPage({
   setActiveIndex
 }) {
   const { address } = useAccount();
-  const { signer } = useSigner();
   const { disconnect } = useDisconnect();
   const { chain } = useNetwork();
   const { chains, error, isLoading, pendingChainId, switchNetwork } = useSwitchNetwork();
   const [messages, setMessages] = useState([])
-
+  // TODO: move header into it's own component, move chainLogos with it
+  const chainLogoMetadata = {
+    43113: {logo: avalanche, name: "Avalanche Fuji"},
+    80001: {logo: polygon, name: "Polygon Mumbai"},
+    3: {logo: ethereum, name: "Ethereum Ropsten"}
+  }
   const handleActiveReciever = (e, index, address) => {
     setActiveIndex(index);
     setActiveReceiver(address);
@@ -259,6 +261,7 @@ export default function MessagingPage({
       )}
       <div className="w-[70%]">
         <div className="flex flex-row justify-between items-center px-[20px] py-[40px] h-[100px]">
+          {/* Header */}
           <img className="h-[30px]" src={logo}></img>
           <div className="flex flex-row gap-4">
             <button
@@ -273,25 +276,25 @@ export default function MessagingPage({
                 </>
               ) : (
                 <>
-                  <img className="w-[25px]" src={avalanche}></img>
-                  Avalanche
+                  <img className="w-[25px]" src={chainLogoMetadata[chain.id].logo}></img>
+                  {chainLogoMetadata[chain.id].name}
                   <img src={dropdown}></img>
                 </>
               )}
             </button>
             <button
-              className="flex flex-row justify-center items-center gap-[15px] px-5 py-3 bg-white text-black font-bold rounded-[30px] border-[3px] border-[#333333]"
+              className="flex flex-row justify-center items-center gap-[10px] px-5 py-3 bg-white text-black font-bold rounded-[30px] border-[3px] border-[#333333]"
               onClick={() => disconnect()}
             >
               {`${address.substring(0, 4)}...${address.substring(38)}`}
               <img src={logout}></img>
             </button>
             <button
-              className="flex flex-row justify-center items-center gap-[15px] px-5 py-3 bg-[rgb(44,157,218)] text-white font-bold rounded-[30px] border-[3px] border-[#333333]"
+              className="flex flex-row justify-center items-center gap-[10px] px-5 py-3 bg-[rgb(44,157,218)] text-white font-bold rounded-[30px] border-[3px] border-[#333333]"
               onClick={toggleOpenCommAddressModal}
             >
               Change keys
-              {/* <img className="h-[20px] w-[20px]" src={identity}></img> */}
+              <img className="h-[20px] w-[20px]" src={changeKeysIcon}></img>
             </button>   
             <button
               className="flex flex-row justify-center items-center gap-[15px] px-5 py-3 bg-gradient-to-r from-[#00FFD1] to-[#FF007A] via-[#9b649c] text-white font-bold rounded-[30px] border-[3px] border-[#333333]"
