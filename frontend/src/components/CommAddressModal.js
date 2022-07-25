@@ -2,7 +2,7 @@ import Modal from "react-modal";
 import React from "react";
 import EthCrypto from "eth-crypto";
 import {ethers} from "ethers";
-import EchoJSON from "../artifacts/contracts/Echo.sol/Echo.json";
+import EchoJSON from "../contracts/Echo.sol/Echo.json";
 
 const modalStyles = {
   content: {
@@ -18,10 +18,22 @@ const modalStyles = {
   },
 };
 
+//
+const CHAIN_LOGO_METADATA = {
+  43113: {name: "Avalanche Fuji"},
+  80001: {name: "Polygon Mumbai"},
+  3: {name: "Ethereum Ropsten"}
+}
 
 const initConnection = async () => {
+  let contractAddress;
+  const chainID = parseInt(window.ethereum.networkVersion)
+  if (CHAIN_LOGO_METADATA[chainID].name === "Avalanche Fuji") {
+    contractAddress = "0x79DD6a9aF59dE8911E5Bd83835E960010Ff6887A";
+  } else {
+    contractAddress = "0x9BAcd26D33175987B5807107a73bb8D6f69225d9";
+  }
   const provider = new ethers.providers.Web3Provider(window.ethereum);
-  const contractAddress = "0x9BAcd26D33175987B5807107a73bb8D6f69225d9";
   const echoContract = await new ethers.Contract(
     contractAddress,
     EchoJSON.abi,
@@ -30,7 +42,8 @@ const initConnection = async () => {
   return echoContract;
 }
 
-const createCommunicationAddress = async (connectedAddress) => {
+
+const createCommunicationAddress = async () => {
   const provider = new ethers.providers.Web3Provider(window.ethereum);
   const signer = provider.getSigner();
   const echoContract = await initConnection();
@@ -50,8 +63,8 @@ export default function NewCommAddressModal({
   setCommunicationAddress
 }) {
   const handleSetCommunicationAddress = (e) => {
-    const publicKey = createCommunicationAddress();
-    setCommunicationAddress(publicKey);
+    createCommunicationAddress();
+    setCommunicationAddress(JSON.parse(localStorage.getItem("public-communication-address")));
     toggleOpenModal();
   }
 

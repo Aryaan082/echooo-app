@@ -3,7 +3,7 @@ import { useAccount, useDisconnect, useNetwork, useSigner, useSwitchNetwork } fr
 import {ethers} from "ethers";
 import EthCrypto from "eth-crypto";
 import { createClient } from "urql";
-import EchoJSON from "../artifacts/contracts/Echo.sol/Echo.json";
+import EchoJSON from "../contracts/Echo.sol/Echo.json";
 
 import 'isomorphic-unfetch'; // required for urql: https://github.com/FormidableLabs/urql/issues/283
 
@@ -22,15 +22,40 @@ import changeKeysIcon from "../assets/change-keys-icon.svg";
 import sendMessagesIcon from "../assets/send-icon.svg";
 import "../styles/receivers.css";
 
+// TODO: Add support for changing graphQL API when switching networks
+// https://api.thegraph.com/subgraphs/name/mtwichan/echofuji
 
-const GRAPH_API_URL = "https://api.thegraph.com/subgraphs/name/mtwichan/echo";
-const graphClient = createClient({
-  url: GRAPH_API_URL,
-});
+// TODO: Move constants to own file
+const CHAIN_LOGO_METADATA = {
+  43113: {logo: avalanche, name: "Avalanche Fuji"},
+  80001: {logo: polygon, name: "Polygon Mumbai"},
+  3: {logo: ethereum, name: "Ethereum Ropsten"}
+}
 
+// TODO: change init code so object is only instantiated once & make constants
+const initGraphClient = async () => {
+  const chainID = parseInt(window.ethereum.networkVersion)
+  let graphApiUrl;
+
+  if (CHAIN_LOGO_METADATA[chainID].name === "Avalanche Fuji") {
+    graphApiUrl = "https://api.thegraph.com/subgraphs/name/mtwichan/echofuji";
+  } else {
+    graphApiUrl = "https://api.thegraph.com/subgraphs/name/mtwichan/echo";
+  }
+  const graphClient = createClient({
+    url: graphApiUrl,
+  });
+  return graphClient;
+}
 const initConnection = async () => {
+  let contractAddress;
+  const chainID = parseInt(window.ethereum.networkVersion)
+  if (CHAIN_LOGO_METADATA[chainID].name === "Avalanche Fuji") {
+    contractAddress = "0x79DD6a9aF59dE8911E5Bd83835E960010Ff6887A";
+  } else {
+    contractAddress = "0x9BAcd26D33175987B5807107a73bb8D6f69225d9";
+  }
   const provider = new ethers.providers.Web3Provider(window.ethereum);
-  const contractAddress = "0x9BAcd26D33175987B5807107a73bb8D6f69225d9";
   const echoContract = await new ethers.Contract(
     contractAddress,
     EchoJSON.abi,
@@ -101,6 +126,7 @@ const SendMessages = ({receiverAddress, messages, setMessages}) => {
         }
       }
     `
+    const graphClient = await initGraphClient();
     const data = await graphClient.query(identitiesQuery).toPromise();
     const communicationAddress = data.data.identities[0].communicationAddress;
     
@@ -151,12 +177,7 @@ export default function MessagingPage({
   const { chain } = useNetwork();
   const { chains, error, isLoading, pendingChainId, switchNetwork } = useSwitchNetwork();
   const [messages, setMessages] = useState([])
-  // TODO: move header into it's own component, move chainLogos with it
-  const chainLogoMetadata = {
-    43113: {logo: avalanche, name: "Avalanche Fuji"},
-    80001: {logo: polygon, name: "Polygon Mumbai"},
-    3: {logo: ethereum, name: "Ethereum Ropsten"}
-  }
+  
   const handleActiveReciever = (e, index, address) => {
     setActiveIndex(index);
     setActiveReceiver(address);
@@ -183,6 +204,7 @@ export default function MessagingPage({
           }
         }
       `
+      const graphClient = initGraphClient();
       const dataIdentity = await graphClient.query(identitiesTimestampQuery).toPromise();
       const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
       const dataIdentityCommAddress = dataIdentity.data.identities[0].communicationAddress; // TODO: Use this to check that this address matches our comm address
@@ -276,8 +298,8 @@ export default function MessagingPage({
                 </>
               ) : (
                 <>
-                  <img className="w-[25px]" src={chainLogoMetadata[chain.id].logo}></img>
-                  {chainLogoMetadata[chain.id].name}
+                  <img className="w-[25px]" src={CHAIN_LOGO_METADATA[chain.id].logo}></img>
+                  {CHAIN_LOGO_METADATA[chain.id].name}
                   <img src={dropdown}></img>
                 </>
               )}
