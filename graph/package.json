@@ -4,13 +4,19 @@
   "scripts": {
     "codegen": "graph codegen",
     "build": "graph build",
-    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ mtwichan/Echo",
+    "deploy:mumbai": "npm run prepare:mumbai && graph deploy --node https://api.thegraph.com/deploy/ mtwichan/Echo",
+    "deploy:fuji": "npm run prepare:fuji && graph deploy --node https://api.thegraph.com/deploy/ mtwichan/Echofuji",
     "create-local": "graph create --node http://localhost:8020/ mtwichan/Echo",
     "remove-local": "graph remove --node http://localhost:8020/ mtwichan/Echo",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 mtwichan/Echo"
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 mtwichan/Echo",
+    "prepare:mumbai": "mustache config/mumbai.json subgraph.template.yaml > subgraph.yaml",
+    "prepare:fuji": "mustache config/fuji.json subgraph.template.yaml > subgraph.yaml"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.28.0",
     "@graphprotocol/graph-ts": "0.26.0"
+  },
+  "devDependencies": {
+    "mustache": "^3.1.0"
   }
 }

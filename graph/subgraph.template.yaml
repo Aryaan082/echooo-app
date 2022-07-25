@@ -1,12 +1,12 @@
 specVersion: 0.0.2
 schema:
-  file: schema.graphql
+  file: ./schema.graphql
 dataSources:
   - kind: ethereum
     name: Echo
-    network: fuji
+    network: {{network}}
     source:
-      address: "0x79DD6a9aF59dE8911E5Bd83835E960010Ff6887A"
+      address: "{{address}}"
       abi: Echo
     mapping:
       kind: ethereum/events
@@ -17,10 +17,10 @@ dataSources:
         - MessageEvent
       abis:
         - name: Echo
-          file: Echo/abis/Echo.json
+          file: ./abis/Echo.json
       eventHandlers:
         - event: IdentityEvent(string)
           handler: handleIdentityEvent
         - event: MessageEvent(indexed address,string)
           handler: handleMessageEvent
-      file: Echo/Echo.wasm
+      file: ./src/mapping.ts

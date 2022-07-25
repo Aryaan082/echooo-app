@@ -6,6 +6,7 @@ import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
+import "hardhat-abi-exporter";
 
 dotenv.config();
 
@@ -31,6 +32,10 @@ const config: HardhatUserConfig = {
         runs: 200,
       },
     },
+  },
+  abiExporter: {
+    path: "./frontend/src/",
+    clear: true,
   },
   networks: {
     ropsten: {
