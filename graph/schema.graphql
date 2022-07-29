@@ -1,13 +1,14 @@
 type Identity @entity {
   id: ID!
   communicationAddress: String! # string
-  timestamp: BigInt!
   from: Bytes!
+  timestamp: BigInt!
 }
 
 type Message @entity {
   id: ID!
-  reciever: Bytes! # address
+  receiver: Bytes! # address
   message: String! # string
+  from: Bytes!
   timestamp: BigInt!
 }

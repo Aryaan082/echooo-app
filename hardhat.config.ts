@@ -6,6 +6,7 @@ import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
+import "hardhat-abi-exporter";
 
 dotenv.config();
 
@@ -32,10 +33,18 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  abiExporter: {
+    path: "./frontend/src/",
+    clear: true,
+  },
   networks: {
     ropsten: {
       url: process.env.ROPSTEN_URL || "",
       accounts: [process.env.PRIVATE_KEY_ROPSTEN || ""]
+    },
+    fuji: {
+      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      accounts: [process.env.PRIVATE_KEY_FUJI || ""],
     },
     matic: {
       url: "https://rpc-mumbai.maticvigil.com",

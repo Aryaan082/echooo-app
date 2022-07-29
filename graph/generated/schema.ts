@@ -15,10 +15,6 @@ export class Identity extends Entity {
   constructor(id: string) {
     super();
     this.set("id", Value.fromString(id));
-
-    this.set("communicationAddress", Value.fromString(""));
-    this.set("timestamp", Value.fromBigInt(BigInt.zero()));
-    this.set("from", Value.fromBytes(Bytes.empty()));
   }
 
   save(): void {
@@ -55,15 +51,6 @@ export class Identity extends Entity {
     this.set("communicationAddress", Value.fromString(value));
   }
 
-  get timestamp(): BigInt {
-    let value = this.get("timestamp");
-    return value!.toBigInt();
-  }
-
-  set timestamp(value: BigInt) {
-    this.set("timestamp", Value.fromBigInt(value));
-  }
-
   get from(): Bytes {
     let value = this.get("from");
     return value!.toBytes();
@@ -72,16 +59,21 @@ export class Identity extends Entity {
   set from(value: Bytes) {
     this.set("from", Value.fromBytes(value));
   }
+
+  get timestamp(): BigInt {
+    let value = this.get("timestamp");
+    return value!.toBigInt();
+  }
+
+  set timestamp(value: BigInt) {
+    this.set("timestamp", Value.fromBigInt(value));
+  }
 }
 
 export class Message extends Entity {
   constructor(id: string) {
     super();
     this.set("id", Value.fromString(id));
-
-    this.set("reciever", Value.fromBytes(Bytes.empty()));
-    this.set("message", Value.fromString(""));
-    this.set("timestamp", Value.fromBigInt(BigInt.zero()));
   }
 
   save(): void {
@@ -109,13 +101,13 @@ export class Message extends Entity {
     this.set("id", Value.fromString(value));
   }
 
-  get reciever(): Bytes {
-    let value = this.get("reciever");
+  get receiver(): Bytes {
+    let value = this.get("receiver");
     return value!.toBytes();
   }
 
-  set reciever(value: Bytes) {
-    this.set("reciever", Value.fromBytes(value));
+  set receiver(value: Bytes) {
+    this.set("receiver", Value.fromBytes(value));
   }
 
   get message(): string {
@@ -125,6 +117,15 @@ export class Message extends Entity {
 
   set message(value: string) {
     this.set("message", Value.fromString(value));
+  }
+
+  get from(): Bytes {
+    let value = this.get("from");
+    return value!.toBytes();
+  }
+
+  set from(value: Bytes) {
+    this.set("from", Value.fromBytes(value));
   }
 
   get timestamp(): BigInt {

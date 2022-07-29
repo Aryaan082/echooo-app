@@ -4,7 +4,6 @@ import "./index.css";
 import App from "./components/App";
 import reportWebVitals from "./reportWebVitals";
 
-import {ChakraProvider} from "@chakra-ui/react";
 import {
   WagmiConfig,
   createClient,
@@ -21,9 +20,9 @@ import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
 
 const alchemyId = process.env.ALCHEMY_ID;
 
-const avalancheChain = {
-  id: 43_114,
-  name: "Avalanche",
+const avalancheChain: Chain = {
+  id: 43113,
+  name: "Avalanche FUJI Testnet",
   network: "avalanche",
   nativeCurrency: {
     decimals: 18,
@@ -31,7 +30,7 @@ const avalancheChain = {
     symbol: "AVAX",
   },
   rpcUrls: {
-    default: "https://api.avax.network/ext/bc/C/rpc",
+    default: "https://api.avax-test.network/ext/bc/C/rpc",
   },
   blockExplorers: {
     default: { name: "SnowTrace", url: "https://snowtrace.io" },
@@ -40,7 +39,7 @@ const avalancheChain = {
 };
 
 const { chains, provider, webSocketProvider } = configureChains(
-  [avalancheChain, chain.mainnet],
+  [avalancheChain, chain.polygonMumbai, chain.ropsten],
   [alchemyProvider({ alchemyId }), publicProvider()]
 );
 
@@ -75,11 +74,9 @@ const client = createClient({
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <ChakraProvider>
       <WagmiConfig client={client}>
         <App />
       </WagmiConfig>
-    </ChakraProvider>
   </React.StrictMode>
 );
 

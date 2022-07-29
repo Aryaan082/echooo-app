@@ -26,7 +26,7 @@ describe("Echo Contract", () => {
     const provider = new ethers.providers.JsonRpcProvider(`https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
     const privateKey = process.env.PRIVATE_KEY_MATIC || "";
     wallet = new ethers.Wallet(privateKey, provider);
-    const contractAddress = "0x9BAcd26D33175987B5807107a73bb8D6f69225d9";
+    const contractAddress = "0x21e29E3038AeCC76173103A5cb9711Ced1D23C01";
     echoContract = await new ethers.Contract(
       contractAddress,
       EchoJSON.abi,
@@ -149,11 +149,13 @@ describe("Echo Contract", () => {
 
   it.only("Can receive messages", async () => {
     const BPublicCommuncationAddress = wallet.address;
-    const BPrivateCommunicationAddress = "0x60d4fc1bd39d60562810bdb259dc7ac144537cac3353e5b2d785c955c90b7cbe";
+    const BPrivateCommunicationAddress = "0x87444924e8cc0783e721c55d13eaf51abf31b5aeda971ffdf05c7b3ae8e646fa";
     const identitiesTimestampQuery = `
       query {
         identities(
-          from: "${BPublicCommuncationAddress}"
+          where: {
+            from: "${BPublicCommuncationAddress}"
+          }          
           first: 1
           orderBy: timestamp
           orderDirection: desc
@@ -166,10 +168,10 @@ describe("Echo Contract", () => {
     const dataIdentity = await graphClient.query(identitiesTimestampQuery).toPromise();
     const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
     const dataIdentityCommAddress = dataIdentity.data.identities[0].communicationAddress; // TODO: Use this to check that this address matches our comm address
-    
+
     const messagesQuery = `
       query {
-        messages(where: {timestamp_gte: "${dataIdentityTimestamp}"}, from: "${BPrivateCommunicationAddress}", orderBy: timestamp, orderDirection: desc) {
+        messages(where: {timestamp_gte: "${dataIdentityTimestamp}"}, orderBy: timestamp, orderDirection: desc) {
           message,
           timestamp     
         }
@@ -177,6 +179,7 @@ describe("Echo Contract", () => {
     `
     const dataMessages = await graphClient.query(messagesQuery).toPromise();
     const dataMessagesParsed = dataMessages.data.messages;
+    console.log("messages >>>", dataMessagesParsed)
     for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
       const message = dataMessagesParsed[idx].message;
       const decryptedMessage = await EthCrypto.decryptWithPrivateKey(

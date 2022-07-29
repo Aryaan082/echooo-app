@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { useAccount, useDisconnect, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useDisconnect, useNetwork, useSigner, useSwitchNetwork } from "wagmi";
+import { ethers } from "ethers";
+import EthCrypto from "eth-crypto";
+import { createClient } from "urql";
+import EchoJSON from "../contracts/Echo.sol/Echo.json";
+import 'isomorphic-unfetch'; // required for urql: https://github.com/FormidableLabs/urql/issues/283
+
+import ChatBox from "./ChatBox";
+
+// TODO: create an index.js file that allows for multi imports in one line
 import logout from "../assets/logout-icon.svg";
 import textBubble from "../assets/text-bubble-icon.svg";
 import selectedAddressEllipse from "../assets/selected-address-ellipse.png";
@@ -9,80 +18,210 @@ import dropdown from "../assets/dropdown-icon.svg";
 import logo from "../assets/echooo.svg";
 import errorIcon from "../assets/error-icon.svg";
 import avalanche from "../assets/avalanche-icon.svg";
+import ethereum from "../assets/ethereum-icon.svg";
+import polygon from "../assets/polygon-icon.svg";
+import changeKeysIcon from "../assets/change-keys-icon.svg";
+import sendMessagesIcon from "../assets/send-icon.svg";
 import "../styles/receivers.css";
 
-const ChatBox = ({ receiverAddress }) => {
-  return (
-    <>
-      {/* Reciever */}
-      <div className="w-full" style={{ height: "calc(5vh - 100px}" }}>
-        <div className="flex justify-center align-center">
-          <div className="shadow-md flex flex-wrap rounded-[10px] border-[1px] p-5 bg-[rgba(241,245,249,0.5)] text-center text-md break-words">
-            {receiverAddress}
-          </div>
-        </div>
-      </div>
-
-      {/* Chat box */}
-      <div className="w-full overflow-scroll pt-4" style={{ height: "calc(82.5vh - 100px)" }}>
-        {/* Sender */}
-        <div className="pl-3">
-          <div className="flex flex-row gap-4">
-            <div className="bg-gray-50 p-4 rounded-lg border-[2px] border-[rgba(241,245,249)]">sup, anon!</div>
-          </div>
-          <div className="pt-3 text-xs text-gray-500 italic">
-            {`${receiverAddress.substring(0, 4)}...${receiverAddress.substring(38)}, 04:20 am`}
-          </div>
-        </div>
-
-        {/* Reciever */}
-        <div>
-          <div className="pr-3">
-            <div className="flex flex-row justify-end gap-4">
-              <div className="bg-gray-50 p-4 rounded-lg border-[2px] border-[rgba(241,245,249)]">gm!</div>
-            </div>
-            <div className="flex flex-row justify-end gap-4 pt-3 text-xs text-gray-500 italic">
-              You, 04:21 am
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  )
+// TODO: Move constants to own file
+const CHAIN_LOGO_METADATA = {
+  43113: { logo: avalanche, name: "Avalanche Fuji" },
+  80001: { logo: polygon, name: "Polygon Mumbai" },
+  3: { logo: ethereum, name: "Ethereum Ropsten" }
 }
 
-const SendMessages = (props) => {
+// TODO: change init code so object is only instantiated once & make constants
+const initGraphClient = async () => {
+  const chainID = parseInt(window.ethereum.networkVersion)
+  let graphApiUrl;
+
+  if (CHAIN_LOGO_METADATA[chainID].name === "Avalanche Fuji") {
+    graphApiUrl = "https://api.thegraph.com/subgraphs/name/mtwichan/echofuji";
+  } else {
+    graphApiUrl = "https://api.thegraph.com/subgraphs/name/mtwichan/echo";
+  }
+  const graphClient = createClient({
+    url: graphApiUrl,
+  });
+  return graphClient;
+}
+const initConnection = async () => {
+  let contractAddress;
+  const chainID = parseInt(window.ethereum.networkVersion)
+  if (CHAIN_LOGO_METADATA[chainID].name === "Avalanche Fuji") {
+    contractAddress = "0x79DD6a9aF59dE8911E5Bd83835E960010Ff6887A";
+  } else {
+    contractAddress = "0x21e29E3038AeCC76173103A5cb9711Ced1D23C01";
+  }
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const echoContract = await new ethers.Contract(
+    contractAddress,
+    EchoJSON.abi,
+    provider
+  );
+  return echoContract;
+}
+
+
+// TODO: make into own component once backend logic is complete
+const SendMessages = ({ receiverAddress, messages, setMessages }) => {
+  const [message, setMessage] = useState("");
+
+  const handleSubmitMessage = async (e) => {
+    e.preventDefault();
+
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
+    const echoContract = await initConnection();
+    const senderMessage = message;
+    const BIdentity = receiverAddress;
+
+    // TODO: If user has no communication address, need to create it on the fly for them... 
+    // TODO: sanitize graphQL queries b/c currently dynamic and exposes injection vulnerability
+    const identitiesQuery = `
+      query {
+        identities(where: {from: "${BIdentity}"}, first: 1, orderBy: timestamp, orderDirection: desc) {
+          communicationAddress,
+          timestamp     
+        }
+      }
+    `
+    const graphClient = await initGraphClient();
+    const data = await graphClient.query(identitiesQuery).toPromise();
+    const communicationAddress = data.data.identities[0].communicationAddress;
+
+    const messageEncrypted = await EthCrypto.encryptWithPublicKey(
+      communicationAddress,
+      senderMessage
+    );
+    const messageEncryptedString = EthCrypto.cipher.stringify(
+      messageEncrypted
+    );
+
+    await echoContract.connect(signer).logMessage(BIdentity, messageEncryptedString);
+    const newMessage = { from: signer.address, to: receiverAddress, message: senderMessage }
+    const newMessages = [...messages, newMessage]
+    setMessages(newMessages)
+    setMessage("");
+  }
+
   return (
     <>
-      {/* Send message */}
-      <form className="flex flex-row align-center justify-center w-full gap-4" style={{ height: "calc(15vh - 100px}" }}>
+      <form onSubmit={handleSubmitMessage} className="flex flex-row align-center justify-center w-full gap-4" style={{ height: "calc(15vh - 100px}" }}>
         <div className="ml-2 w-[85%]">
-          <input type="text" id="sender_message" class="shadow-md bg-gray-50 border-[1px] rounded-[20px] border-[rgba(241,245,249,0.7)] text-gray-900 text-md focus:ring-blue-200 focus:border-blue-200 w-full p-4" placeholder="Type your message..." required />
+          <input onChange={e => setMessage(e.target.value)} value={message} type="text" id="sender_message" class="shadow-md bg-gray-50 border-[1px] rounded-[20px] border-[rgba(241,245,249,0.7)] text-gray-900 text-md focus:ring-blue-200 focus:border-blue-200 w-full p-4" placeholder="Type your message..." required />
         </div>
         <div className="mr-2 w-[15%]">
-          <button type="button" class="shadow-md h-full text-white bg-blue-500 border-[1px] rounded-[20px] border-[rgba(241,245,249,0.7)] hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium text-md w-full px-3 py-2.5 text-center">Send ✉️</button>
+          <button type="submit" class="flex flex-row justify-center items-center gap-[10px] shadow-md h-full text-white bg-blue-500 border-[1px] rounded-[20px] border-[rgba(241,245,249,0.7)] hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium text-md w-full px-3 py-2.5 text-center">Send
+            <img className="h-[15px] w-[15px]" src={sendMessagesIcon}></img>
+          </button>
         </div>
       </form>
     </>
   )
 }
 
-
-// shadow-[-5px_5px__0px_#333333]
-
 export default function MessagingPage({
   toggleOpenModalChainSelect,
   communicationSetup,
+  toggleOpenCommAddressModal,
   toggleOpenNewChatModal,
   chatAddresses,
-  activeReceiver,
+  activeReceiverAddress,
+  setActiveReceiver,
+  activeIndex,
+  setActiveIndex
 }) {
-  const [receiverAddress, setReceiverAddress] = useState("0xE8F6EcAa58DCd56013C1013Fd167Edf4dB3e5C96");
   const { address } = useAccount();
   const { disconnect } = useDisconnect();
   const { chain } = useNetwork();
   const { chains, error, isLoading, pendingChainId, switchNetwork } = useSwitchNetwork();
-  // const reciever = "0xE8F6EcAa58DCd56013C1013Fd167Edf4dB3e5C96";
+  const [messages, setMessages] = useState([])
+
+  const handleActiveReceiver = (e, index, address) => {
+    setActiveIndex(index);
+    setActiveReceiver(address);
+  }
+
+  useEffect(() => {
+    // TODO: cache messages
+    const getMessagesAsync = async () => {
+      const provider = await new ethers.providers.Web3Provider(window.ethereum);
+      const signer = await provider.getSigner();
+      const localPrivateKey = JSON.parse(localStorage.getItem("private-communication-address"));
+      const BPublicCommuncationAddress = await signer.getAddress();
+      const BPrivateCommunicationAddress = localPrivateKey[BPublicCommuncationAddress];
+      console.log("BPrivateComm >>", BPrivateCommunicationAddress)
+      const identitiesTimestampQuery = `
+        query {
+          identities(
+            where: {from: "${BPublicCommuncationAddress}"}
+            first: 1
+            orderBy: timestamp
+            orderDirection: desc
+          ) {
+            communicationAddress
+            timestamp
+          }
+        }
+      `
+      const graphClient = await initGraphClient();
+      const dataIdentity = await graphClient.query(identitiesTimestampQuery).toPromise();
+      const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
+      const dataIdentityCommAddress = dataIdentity.data.identities[0].communicationAddress; // TODO: Use this to check that this address matches our comm address
+      console.log("data timestamp >>>", dataIdentityTimestamp)
+      const messagesQuery = `
+        query {
+          messages(            
+            orderBy: timestamp
+            orderDirection: desc
+            where: {
+              from_in: ["${BPublicCommuncationAddress}", "${activeReceiverAddress}"],
+              receiver_in: ["${BPublicCommuncationAddress}", "${activeReceiverAddress}"]
+              timestamp_gte: "${dataIdentityTimestamp}"
+            }
+        
+          ) {
+            from
+            message
+            receiver
+            timestamp
+          }
+        }
+      `
+      const dataMessages = await graphClient.query(messagesQuery).toPromise();
+      // console.log("data messages >>>", dataMessages);
+      // const message = dataMessages.data.messages[0].message;
+      // console.log("message >>>", message)
+      // const decryptedMessage = await EthCrypto.decryptWithPrivateKey(
+      //   BPrivateCommunicationAddress,
+      //   EthCrypto.cipher.parse(message)
+      // );
+      // console.log("decryptedMessage >>>", decryptedMessage)
+      const dataMessagesParsed = dataMessages.data.messages;
+      console.log("data messages parsed >>>", dataMessagesParsed)
+      let messages = []
+      for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
+        let message = await dataMessagesParsed[idx].message;
+        // await message.push({ from: BPublicCommuncationAddress });
+        console.log(message)
+        // await messages.push(message);
+        const decryptedMessage = await EthCrypto.decryptWithPrivateKey(
+          BPrivateCommunicationAddress,
+          EthCrypto.cipher.parse(message)
+        );
+        console.log(`Decrypted message ${idx} >>>`, decryptedMessage);
+      }
+      // console.log("fetched messages", await messages);
+      // setMessages(messages);
+      // return await messages
+    };
+    if (activeReceiverAddress !== "") {
+      getMessagesAsync();
+    }
+  }, [activeReceiverAddress]);
+
   return (
     <div
       className="flex flex-row h-[100vh] w-[100vw] bg-gradient-bg"
@@ -91,20 +230,20 @@ export default function MessagingPage({
       {communicationSetup ? (
         <>
           <div className="border-r-[3px] border-[#333333] border-opacity-10 w-[30%] pt-[4vh]">
-            <code className="text-xl font-semibold pl-[2vw]">Chats list</code>
+            <code className="text-xl font-semibold pl-[2vw]">Your anon chats</code>
             <ul className="Receivers">
-              {chatAddresses.map((item, index) => {
+              {chatAddresses.map((address, index) => {
                 return (
                   <button
                     className="w-[80%] flex flex-row justify-between items-center px-4 py-4 font-bold rounded-[50px]"
                     key={index}
-                    id={activeReceiver === index ? "active" : "inactive"}
+                    id={index === activeIndex ? "active" : "inactive"}
+                    onClick={event => handleActiveReceiver(event, index, address)}
                   >
-                    {console.log(activeReceiver)}
-                    {console.log(index)}
+                    {console.log("index", index)}
                     <code className="flex flex-row items-center gap-4">
                       <img src={selectedAddressEllipse}></img>
-                      {`${item.substring(0, 4)}...${item.substring(38)}`}
+                      {`${address.substring(0, 4)}...${address.substring(38)}`}
                     </code>
                     <img src={continueIconColor}></img>
                   </button>
@@ -123,6 +262,7 @@ export default function MessagingPage({
       )}
       <div className="w-[70%]">
         <div className="flex flex-row justify-between items-center px-[20px] py-[40px] h-[100px]">
+          {/* Header */}
           <img className="h-[30px]" src={logo}></img>
           <div className="flex flex-row gap-4">
             <button
@@ -137,18 +277,25 @@ export default function MessagingPage({
                 </>
               ) : (
                 <>
-                  <img className="w-[25px]" src={avalanche}></img>
-                  Avalanche
+                  <img className="w-[25px]" src={CHAIN_LOGO_METADATA[chain.id].logo}></img>
+                  {CHAIN_LOGO_METADATA[chain.id].name}
                   <img src={dropdown}></img>
                 </>
               )}
             </button>
             <button
-              className="flex flex-row justify-center items-center gap-[15px] px-5 py-3 bg-white text-black font-bold rounded-[30px] border-[3px] border-[#333333]"
+              className="flex flex-row justify-center items-center gap-[10px] px-5 py-3 bg-white text-black font-bold rounded-[30px] border-[3px] border-[#333333]"
               onClick={() => disconnect()}
             >
               {`${address.substring(0, 4)}...${address.substring(38)}`}
               <img src={logout}></img>
+            </button>
+            <button
+              className="flex flex-row justify-center items-center gap-[10px] px-5 py-3 bg-[rgb(44,157,218)] text-white font-bold rounded-[30px] border-[3px] border-[#333333]"
+              onClick={toggleOpenCommAddressModal}
+            >
+              Change keys
+              <img className="h-[20px] w-[20px]" src={changeKeysIcon}></img>
             </button>
             <button
               className="flex flex-row justify-center items-center gap-[15px] px-5 py-3 bg-gradient-to-r from-[#00FFD1] to-[#FF007A] via-[#9b649c] text-white font-bold rounded-[30px] border-[3px] border-[#333333]"
@@ -160,12 +307,13 @@ export default function MessagingPage({
           </div>
         </div>
         {/* Chat */}
-        <div className="flex flex-col w-full mt-5">
-          <ChatBox receiverAddress={receiverAddress} />
-          <SendMessages />
-        </div>
+        {
+          chatAddresses.length > 0 ? <div className="flex flex-col w-full mt-5">
+            <ChatBox messages={messages} setMessages={setMessages} receiverAddress={activeReceiverAddress} />
+            <SendMessages messages={messages} setMessages={setMessages} receiverAddress={activeReceiverAddress} />
+          </div> : ""
+        }
       </div>
-
     </div>
   );
 }
