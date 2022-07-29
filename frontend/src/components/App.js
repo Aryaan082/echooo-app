@@ -27,15 +27,6 @@ export default function App() {
   const [communicationAddress, setCommunicationAddress] = useState(
     JSON.parse(localStorage.getItem("public-communication-address")) || ""
   );
-
-  // useEffect(() => {    
-  //   if (JSON.parse(localStorage.getItem("public-communication-address")) === null) {
-  //     const publicKey = async () => {return await createCommunicationAddress()};
-  //     setCommunicationAddress(publicKey);
-  //   }    
-  // }, [])
-  // console.log("public address >>>", localStorage.getItem("public-communication-address"))
-  // console.log("communicationAddress", communicationAddress)
   
   const toggleOpenModalConnect = () => setOpenModalConnect(!openModalConnect);
   const toggleOpenModalChainSelect = () => setChainSelect(!chainSelect);

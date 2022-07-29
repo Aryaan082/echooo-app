@@ -171,7 +171,7 @@ describe("Echo Contract", () => {
 
     const messagesQuery = `
       query {
-        messages(where: {timestamp_gte: "${dataIdentityTimestamp}",  from: "${B}"}, orderBy: timestamp, orderDirection: desc) {
+        messages(where: {timestamp_gte: "${dataIdentityTimestamp}"}, orderBy: timestamp, orderDirection: desc) {
           message,
           timestamp     
         }

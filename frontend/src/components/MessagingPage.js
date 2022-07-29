@@ -4,9 +4,11 @@ import { ethers } from "ethers";
 import EthCrypto from "eth-crypto";
 import { createClient } from "urql";
 import EchoJSON from "../contracts/Echo.sol/Echo.json";
-import moment from "moment";
 import 'isomorphic-unfetch'; // required for urql: https://github.com/FormidableLabs/urql/issues/283
 
+import ChatBox from "./ChatBox";
+
+// TODO: create an index.js file that allows for multi imports in one line
 import logout from "../assets/logout-icon.svg";
 import textBubble from "../assets/text-bubble-icon.svg";
 import selectedAddressEllipse from "../assets/selected-address-ellipse.png";
@@ -61,62 +63,8 @@ const initConnection = async () => {
   return echoContract;
 }
 
-const createReceiveMessage = (receiverAddress, message, timestamp) => {
-  const messageTimestamp = moment.unix(timestamp).format("DD-MM-YYYY HH:mm");
-  return (
-    <div className="pl-3">
-      <div className="flex flex-row gap-4">
-        <div className="bg-gray-50 p-4 rounded-lg border-[2px] border-[rgba(241,245,249)]">{message}</div>
-      </div>
-      <div className="pt-3 text-xs text-gray-500 italic">
-        {`${receiverAddress.substring(0, 4)}...${receiverAddress.substring(38)}, ${messageTimestamp}`}
-      </div>
-    </div>
-  )
-}
 
-const createSendMessage = (message, timestamp) => {
-  const messageTimestamp = moment.unix(timestamp).format("DD-MM-YYYY HH:mm");
-
-  console.log("time stamp", messageTimestamp)
-  return (
-    <div>
-      <div className="pr-3">
-        <div className="flex flex-row justify-end gap-4">
-          <div className="bg-gray-50 p-4 rounded-lg border-[2px] border-[rgba(241,245,249)]">{message}</div>
-        </div>
-        <div className="flex flex-row justify-end gap-4 pt-3 text-xs text-gray-500 italic">
-          {`You, ${messageTimestamp}`}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const ChatBox = ({receiverAddress, messages, setMessages}) => {
-  console.log("receiver address >>>", receiverAddress)
-  return (
-    <>
-      {/* Reciever */}
-      <div className="w-full" style={{ height: "calc(5vh - 100px}" }}>
-        <div className="flex justify-center align-center">
-          <div className="shadow-md flex flex-wrap rounded-[10px] border-[1px] p-5 bg-[rgba(241,245,249,0.5)] text-center text-md break-words">
-            {receiverAddress}
-          </div>
-        </div>
-      </div>
-
-      {/* Chat box */}
-      <div className="w-full overflow-scroll pt-4" style={{ height: "calc(82.5vh - 100px)" }}>
-        {/* Sender */}
-        {createSendMessage("hello sender", 1658733755)}
-        {/* Reciever */}
-        {createReceiveMessage(receiverAddress, "hello receiver", 1658733755)}
-      </div>
-    </>
-  )
-}
-
+// TODO: make into own component once backend logic is complete
 const SendMessages = ({ receiverAddress, messages, setMessages }) => {
   const [message, setMessage] = useState("");
 
