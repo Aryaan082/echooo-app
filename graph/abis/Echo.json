@@ -46,8 +46,16 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "_receiver", "type": "address" },
-      { "internalType": "string", "name": "_message", "type": "string" }
+      {
+        "internalType": "address",
+        "name": "_receiver",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "_message",
+        "type": "string"
+      }
     ],
     "name": "logMessage",
     "outputs": [],
