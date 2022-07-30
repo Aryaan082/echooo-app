@@ -1,6 +1,8 @@
 import Modal from "react-modal";
 import React from "react";
 
+import "../styles/receivers.css";
+
 import continueIcon from "../assets/continue-icon.svg";
 
 const modalStyles = {
@@ -13,7 +15,6 @@ const modalStyles = {
     borderColor: "#333333",
     borderWidth: "4px",
     borderRadius: "1.5rem",
-    paddingBottom: "25px",
   },
 };
 
@@ -27,7 +28,7 @@ export default function NewChatModal({
   chatAddresses,
   setChatAddresses,
   setActiveReceiver,
-  setActiveIndex
+  setActiveIndex,
 }) {
   const handleChatInputChange = (e) => setNewChatAddress(e.target.value);
 
@@ -37,16 +38,16 @@ export default function NewChatModal({
       onRequestClose={toggleOpenModal}
       style={modalStyles}
     >
-      <div className="flex flex-col gap-10">
-        <code className="text-xl">Start a new anon chat.</code>
+      <div className="flex flex-col py-4 px-4 gap-4">
+        <code className="text-2xl">Start a new anon chat.</code>
         <div className="flex flex-row gap-3">
           <input
             placeholder="Type address or ENS"
             onChange={handleChatInputChange}
-            className="w-[450px] px-4 py-3 font-semibold rounded-[30px] border-[3px] border-[#333333]"
+            className="code w-[450px] px-4 py-3 rounded-[8px] bg-[#f2f2f2]"
           ></input>
           <button
-            className="flex flex-row justify-center items-center gap-[15px] px-5 py-3 bg-gradient-to-r from-[#00FFD1] to-[#FF007A] via-[#9b649c] text-white font-bold rounded-[30px] border-[3px] border-[#333333] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#555555] text-white font-bold rounded-[8px] border-[3px] border-[#333333] disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={
               communicationSetup
                 ? () => {
