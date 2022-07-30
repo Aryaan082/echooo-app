@@ -1,5 +1,5 @@
 // import * as dotenv from "dotenv";
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import WalletModal from "./WalletModal";
 import ChainSelectorModal from "./ChainSelectorModal";
@@ -21,26 +21,31 @@ export default function App() {
   const [openCommAddressModal, setOpenCommAddressModal] = useState(false);
   const [communicationSetup, setCommunicationSetup] = useState(false);
   const [newChatAddress, setNewChatAddress] = useState("");
-  const [activeReceiverAddress, setActiveReceiver] = useState("");
+  const [activeReceiverAddress, setActiveReceiver] = useState(
+    "0x0000000000000000000000000000000000000000"
+  );
   const [chatAddresses, setChatAddresses] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [communicationAddress, setCommunicationAddress] = useState(
     JSON.parse(localStorage.getItem("public-communication-address")) || ""
   );
-  
+
   const toggleOpenModalConnect = () => setOpenModalConnect(!openModalConnect);
   const toggleOpenModalChainSelect = () => setChainSelect(!chainSelect);
   const toggleOpenNewChatModal = () => setOpenNewChatModal(!openNewChatModal);
-  const toggleOpenCommAddressModal = () => setOpenCommAddressModal(!openCommAddressModal)
+  const toggleOpenCommAddressModal = () =>
+    setOpenCommAddressModal(!openCommAddressModal);
 
-  const toggleCommunicationSetup = () => setCommunicationSetup(!communicationSetup);
+  const toggleCommunicationSetup = () =>
+    setCommunicationSetup(!communicationSetup);
   const { chain } = useNetwork();
-  const { chains, error, isLoading, pendingChainId, switchNetwork } = useSwitchNetwork();
+  const { chains, error, isLoading, pendingChainId, switchNetwork } =
+    useSwitchNetwork();
 
   useAccount({
     onDisconnect() {
       setConnectedWallet(false);
-    }
+    },
   });
 
   useAccount({
