@@ -4,6 +4,8 @@ import EthCrypto from "eth-crypto";
 import { ethers } from "ethers";
 import EchoJSON from "../contracts/Echo.sol/Echo.json";
 
+import { ChainLogoMetadata } from "../utils/ChainLogoMetadata.js";
+
 const modalStyles = {
   content: {
     top: "50%",
@@ -17,17 +19,10 @@ const modalStyles = {
   },
 };
 
-// TODO: add to constants file
-const CHAIN_LOGO_METADATA = {
-  43113: { name: "Avalanche Fuji" },
-  80001: { name: "Polygon Mumbai" },
-  3: { name: "Ethereum Ropsten" },
-};
-
 const initConnection = async () => {
   let contractAddress;
   const chainID = parseInt(window.ethereum.networkVersion);
-  if (CHAIN_LOGO_METADATA[chainID].name === "Avalanche Fuji") {
+  if (ChainLogoMetadata[chainID].name === "Avalanche Fuji") {
     contractAddress = "0x79DD6a9aF59dE8911E5Bd83835E960010Ff6887A";
   } else {
     contractAddress = "0x21e29E3038AeCC76173103A5cb9711Ced1D23C01";

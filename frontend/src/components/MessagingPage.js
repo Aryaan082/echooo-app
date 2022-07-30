@@ -14,6 +14,8 @@ import "isomorphic-unfetch"; // required for urql: https://github.com/Formidable
 
 import ChatBox from "./ChatBox";
 
+import { ChainLogoMetadata } from "../utils/ChainLogoMetadata.js";
+
 // TODO: create an index.js file that allows for multi imports in one line
 import logout from "../assets/logout-icon.svg";
 import textBubble from "../assets/text-bubble-icon.svg";
@@ -31,19 +33,12 @@ import changeKeysIcon from "../assets/change-keys-icon.svg";
 import sendMessagesIcon from "../assets/send-message-icon.svg";
 import "../styles/receivers.css";
 
-// TODO: Move constants to own file
-const CHAIN_LOGO_METADATA = {
-  43113: { logo: avalanche, name: "Avalanche Fuji" },
-  80001: { logo: polygon, name: "Polygon Mumbai" },
-  3: { logo: ethereum, name: "Ethereum Ropsten" },
-};
-
 // TODO: change init code so object is only instantiated once & make constants
 const initGraphClient = async () => {
   const chainID = parseInt(window.ethereum.networkVersion);
   let graphApiUrl;
 
-  if (CHAIN_LOGO_METADATA[chainID].name === "Avalanche Fuji") {
+  if (ChainLogoMetadata[chainID].name === "Avalanche Fuji") {
     graphApiUrl = "https://api.thegraph.com/subgraphs/name/mtwichan/echofuji";
   } else {
     graphApiUrl = "https://api.thegraph.com/subgraphs/name/mtwichan/echo";
@@ -56,7 +51,7 @@ const initGraphClient = async () => {
 const initConnection = async () => {
   let contractAddress;
   const chainID = parseInt(window.ethereum.networkVersion);
-  if (CHAIN_LOGO_METADATA[chainID].name === "Avalanche Fuji") {
+  if (ChainLogoMetadata[chainID].name === "Avalanche Fuji") {
     contractAddress = "0x79DD6a9aF59dE8911E5Bd83835E960010Ff6887A";
   } else {
     contractAddress = "0x21e29E3038AeCC76173103A5cb9711Ced1D23C01";
@@ -83,7 +78,7 @@ const SendMessages = ({ receiverAddress, messages, setMessages }) => {
     const senderMessage = message;
     const BIdentity = receiverAddress;
 
-    // TODO: If user has no communication address, need to create it on the fly for them...
+    // TODO: If user has no communication address, need to create it on the fly for them... Check if public key exists within cache
     // TODO: sanitize graphQL queries b/c currently dynamic and exposes injection vulnerability
     const identitiesQuery = `
       query {
@@ -324,10 +319,10 @@ export default function MessagingPage({
                   <>
                     <img
                       className="w-[25px]"
-                      src={CHAIN_LOGO_METADATA[chain.id].logo}
+                      src={ChainLogoMetadata[chain.id].logo}
                       alt=""
                     ></img>
-                    {CHAIN_LOGO_METADATA[chain.id].name}
+                    {ChainLogoMetadata[chain.id].name}
                     <img src={dropdown} alt=""></img>
                   </>
                 )}

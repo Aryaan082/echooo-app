@@ -7,12 +7,10 @@ const ChatBox = ({ receiverAddress, messages, setMessages }) => {
   return (
     <>
       {/* Chat box */}
-      <div className="w-full">
-        {/* Sender */}
-        {SendMessageContainer("hello sender", 1658733755)}
-        {/* Reciever */}
-        {ReceiveMessageContainer(receiverAddress, "hello receiver", 1658733755)}
-      </div>
+      {/* Sender */}
+      {SendMessageContainer("hello sender", 1658733755)}
+      {/* Reciever */}
+      {ReceiveMessageContainer(receiverAddress, "hello receiver", 1658733755)}
     </>
   );
 };

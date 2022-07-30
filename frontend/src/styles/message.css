@@ -1,0 +1,18 @@
+.message-sender {
+  color: black;
+  border-radius: 30px;
+  border-bottom-right-radius: 0;
+  filter: drop-shadow(0 0 3px rgb(0 0 0 / 0.1));
+  padding: 12px 18px;
+  background-color: white;
+  border: 1px solid #eeeeee;
+}
+
+.message-receiver {
+  color: black;
+  border-radius: 30px;
+  border-bottom-left-radius: 0;
+  filter: drop-shadow(0 0 3px rgba(220, 220, 220, 0.1));
+  padding: 12px 18px;
+  background-color: #eeeeee;
+}

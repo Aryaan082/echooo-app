@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract Echo {    
+contract Echo {
     event MessageEvent(address indexed _receiver, string _message);
     event IdentityEvent(string _communicationAddress);
 
@@ -10,8 +10,10 @@ contract Echo {
     }
 
     function logIdentity(string calldata _communicationAddress) external {
-        // TODO: Add a check to ensure _communicationAddress is a public key -> check length?
-        // require(_communicationAddress == "", "Echo::logIdentity: INVALID_LENGTH");
+        require(
+            bytes(_communicationAddress).length == 64,
+            "Echo: communication address invalid"
+        );
         emit IdentityEvent(_communicationAddress);
     }
 }
