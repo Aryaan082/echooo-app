@@ -2,9 +2,10 @@ import Modal from "react-modal";
 import React from "react";
 import EthCrypto from "eth-crypto";
 import { ethers } from "ethers";
+import { useAccount, useContract, useProvider, useSigner } from "wagmi";
 import EchoJSON from "../contracts/Echo.sol/Echo.json";
 
-import { ChainLogoMetadata } from "../utils/ChainLogoMetadata.js";
+import ContractInstances from "../contracts/ContractInstances";
 
 const modalStyles = {
   content: {
@@ -19,34 +20,13 @@ const modalStyles = {
   },
 };
 
-const initConnection = async () => {
-  let contractAddress;
-  const chainID = parseInt(window.ethereum.networkVersion);
-  if (ChainLogoMetadata[chainID].name === "Avalanche Fuji") {
-    contractAddress = "0x79DD6a9aF59dE8911E5Bd83835E960010Ff6887A";
-  } else {
-    contractAddress = "0x21e29E3038AeCC76173103A5cb9711Ced1D23C01";
-  }
-  const provider = new ethers.providers.Web3Provider(window.ethereum);
-  const echoContract = await new ethers.Contract(
-    contractAddress,
-    EchoJSON.abi,
-    provider
-  );
-  return echoContract;
-};
-
-const createCommunicationAddress = async () => {
-  const provider = new ethers.providers.Web3Provider(window.ethereum);
-  const signer = provider.getSigner();
-  const echoContract = await initConnection();
+const createCommunicationAddress = async (echoContract, address) => {
   const ethWallet = EthCrypto.createIdentity();
   const publicKey = ethWallet.publicKey;
   const privateKey = ethWallet.privateKey;
-  const tx = await echoContract.connect(signer).logIdentity(publicKey);
+  const tx = await echoContract.logIdentity(publicKey);
   await tx.wait();
 
-  const signerAddress = await signer.getAddress();
   let localPublicKeys = JSON.parse(
     localStorage.getItem("public-communication-address")
   );
@@ -62,10 +42,10 @@ const createCommunicationAddress = async () => {
   }
 
   const newLocalPublicKeys = Object.assign({}, localPublicKeys, {
-    [signerAddress]: publicKey,
+    [address]: publicKey,
   });
   const newLocalPrivateKeys = Object.assign({}, localPrivateKeys, {
-    [signerAddress]: privateKey,
+    [address]: privateKey,
   });
   console.log("new public local key", newLocalPublicKeys);
   localStorage.setItem(
@@ -84,16 +64,18 @@ export default function NewCommAddressModal({
   toggleOpenModal,
   setCommunicationAddress,
 }) {
+  const { address } = useAccount();
+
+  const echoContract = ContractInstances();
+
   const handleSetCommunicationAddress = async (e) => {
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const signer = provider.getSigner();
-    const signerAddress = await signer.getAddress();
-    createCommunicationAddress();
+    await createCommunicationAddress(echoContract, address);
+
     const localPublicKeys = JSON.parse(
       localStorage.getItem("public-communication-address")
     );
-    console.log("local address >>>", signerAddress);
-    const signerPublicKey = localPublicKeys[signerAddress];
+    console.log("local address >>>", address);
+    const signerPublicKey = localPublicKeys[address];
     setCommunicationAddress(signerPublicKey);
     toggleOpenModal();
   };
@@ -109,14 +91,15 @@ export default function NewCommAddressModal({
           Create a new communication address.
         </code>
         <code className="text-md text-gray-500 w-[450px]">
-          A new communication address will make your messages safer.
+          Create your new communication public and private keys to keep your
+          messages safe.
         </code>
         <div className="flex flex-col gap-2">
           <button
             className="w-full flex text-lg justify-center items-center px-5 py-3 bg-[rgb(44,156,218)] via-[#9b649c] text-white font-bold rounded-[8px] border-[3px] border-[#333333]"
             onClick={handleSetCommunicationAddress}
           >
-            <code>Create new address</code>
+            <code>Get your keys</code>
           </button>
           <button
             className="w-full flex text-lg justify-center items-center bg-white-500 text-[rgb(46,128,236)] font-bold px-5 py-3"

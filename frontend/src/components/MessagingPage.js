@@ -12,6 +12,7 @@ import { createClient } from "urql";
 import EchoJSON from "../contracts/Echo.sol/Echo.json";
 import "isomorphic-unfetch"; // required for urql: https://github.com/FormidableLabs/urql/issues/283
 
+import ContractInstances from "../contracts/ContractInstances";
 import ChatBox from "./ChatBox";
 
 import { ChainLogoMetadata } from "../utils/ChainLogoMetadata.js";
@@ -48,33 +49,18 @@ const initGraphClient = async () => {
   });
   return graphClient;
 };
-const initConnection = async () => {
-  let contractAddress;
-  const chainID = parseInt(window.ethereum.networkVersion);
-  if (ChainLogoMetadata[chainID].name === "Avalanche Fuji") {
-    contractAddress = "0x79DD6a9aF59dE8911E5Bd83835E960010Ff6887A";
-  } else {
-    contractAddress = "0x21e29E3038AeCC76173103A5cb9711Ced1D23C01";
-  }
-  const provider = new ethers.providers.Web3Provider(window.ethereum);
-  const echoContract = await new ethers.Contract(
-    contractAddress,
-    EchoJSON.abi,
-    provider
-  );
-  return echoContract;
-};
 
 // TODO: make into own component once backend logic is complete
 const SendMessages = ({ receiverAddress, messages, setMessages }) => {
   const [message, setMessage] = useState("");
 
+  const { address } = useAccount();
+
+  const echoContract = ContractInstances();
+
   const handleSubmitMessage = async (e) => {
     e.preventDefault();
 
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const signer = provider.getSigner();
-    const echoContract = await initConnection();
     const senderMessage = message;
     const BIdentity = receiverAddress;
 
@@ -98,11 +84,9 @@ const SendMessages = ({ receiverAddress, messages, setMessages }) => {
     );
     const messageEncryptedString = EthCrypto.cipher.stringify(messageEncrypted);
 
-    await echoContract
-      .connect(signer)
-      .logMessage(BIdentity, messageEncryptedString);
+    await echoContract.logMessage(BIdentity, messageEncryptedString);
     const newMessage = {
-      from: signer.address,
+      from: address,
       to: receiverAddress,
       message: senderMessage,
     };
@@ -355,8 +339,7 @@ export default function MessagingPage({
             </div>
           </div>
           {/* Reciever */}
-          {/* {chatAddresses.length > 0 ? ( */}
-          {true ? (
+          {chatAddresses.length > 0 ? (
             <div className="w-full" style={{ height: "calc(5vh - 100px}" }}>
               <div className="flex justify-center align-center">
                 <div className="shadow-md flex flex-wrap rounded-[10px] border-[1px] p-5 bg-[rgba(241,245,249,0.5)] text-center text-md break-words">
@@ -370,8 +353,7 @@ export default function MessagingPage({
         </div>
 
         {/* Chat */}
-        {/* {chatAddresses.length > 0 ? ( */}
-        {true ? (
+        {chatAddresses.length > 0 ? (
           <div className="flex flex-col">
             <ChatBox
               messages={messages}
