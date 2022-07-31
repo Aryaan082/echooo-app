@@ -1,11 +1,11 @@
 // import * as dotenv from "dotenv";
 import React, { useEffect, useState } from "react";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
-import WalletModal from "./WalletModal";
-import ChainSelectorModal from "./ChainSelectorModal";
-import NewChatModal from "./NewChatModal";
-import MessagingPage from "./MessagingPage";
-import CommAddressModal from "./CommAddressModal";
+import WalletModal from "./wallet/WalletModal";
+import ChainSelectorModal from "./chain/ChainSelectorModal";
+import NewChatModal from "./startNewChat/NewChatModal";
+import MessagingPage from "./messaging/MessagingPage";
+import CommAddressModal from "./changeKeys/CommAddressModal";
 
 import gradientOne from "../assets/gradient-one.svg";
 import gradientTwo from "../assets/gradient-two.svg";
@@ -35,9 +35,9 @@ export default function App() {
   const toggleOpenNewChatModal = () => setOpenNewChatModal(!openNewChatModal);
   const toggleOpenCommAddressModal = () =>
     setOpenCommAddressModal(!openCommAddressModal);
-
   const toggleCommunicationSetup = () =>
     setCommunicationSetup(!communicationSetup);
+
   const { chain } = useNetwork();
   const { chains, error, isLoading, pendingChainId, switchNetwork } =
     useSwitchNetwork();
@@ -115,7 +115,6 @@ export default function App() {
         <MessagingPage
           toggleOpenModalChainSelect={toggleOpenModalChainSelect}
           communicationSetup={communicationSetup}
-          toggleCommunicationSetup={toggleCommunicationSetup}
           toggleOpenCommAddressModal={toggleOpenCommAddressModal}
           toggleOpenNewChatModal={toggleOpenNewChatModal}
           chatAddresses={chatAddresses}
@@ -123,6 +122,7 @@ export default function App() {
           setActiveIndex={setActiveIndex}
           activeReceiverAddress={activeReceiverAddress}
           setActiveReceiver={setActiveReceiver}
+          communicationAddress={communicationAddress}
         />
       )}
     </div>

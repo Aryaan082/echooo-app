@@ -1,9 +1,9 @@
 import Modal from "react-modal";
 import React from "react";
 
-import "../styles/receivers.css";
+import "../../styles/receivers.css";
 
-import continueIcon from "../assets/continue-icon.svg";
+import continueIcon from "../../assets/continue-icon.svg";
 
 const modalStyles = {
   content: {
@@ -49,12 +49,14 @@ export default function NewChatModal({
           <button
             className="flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#555555] text-white font-bold rounded-[8px] border-[3px] border-[#333333] disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={
+              // communication is setup when at least 1 chat is open
               communicationSetup
                 ? () => {
                     toggleOpenModal();
                     setChatAddresses([...chatAddresses, newChatAddress]);
                     setActiveReceiver(newChatAddress);
                     setActiveIndex(chatAddresses.length);
+                    setNewChatAddress("");
                   }
                 : () => {
                     toggleCommunicationSetup();
@@ -62,14 +64,25 @@ export default function NewChatModal({
                     setChatAddresses([...chatAddresses, newChatAddress]);
                     setActiveReceiver(newChatAddress);
                     setActiveIndex(chatAddresses.length);
+                    setNewChatAddress("");
                   }
             }
-            disabled={newChatAddress.length !== 42}
+            disabled={
+              newChatAddress.length !== 42 ||
+              chatAddresses.includes(newChatAddress)
+            }
           >
             Start
             <img src={continueIcon}></img>
           </button>
         </div>
+        {chatAddresses.includes(newChatAddress) ? (
+          <div className="text-lg text-red-500 text-center">
+            Chatter already exists.
+          </div>
+        ) : (
+          <></>
+        )}
       </div>
     </Modal>
   );

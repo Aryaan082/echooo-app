@@ -9,30 +9,30 @@ import {
 import { ethers } from "ethers";
 import EthCrypto from "eth-crypto";
 import { createClient } from "urql";
-import EchoJSON from "../contracts/Echo.sol/Echo.json";
+import EchoJSON from "../../contracts/Echo.sol/Echo.json";
 import "isomorphic-unfetch"; // required for urql: https://github.com/FormidableLabs/urql/issues/283
 
-import ContractInstances from "../contracts/ContractInstances";
+import ContractInstances from "../../contracts/ContractInstances";
 import ChatBox from "./ChatBox";
 
-import { ChainLogoMetadata } from "../utils/ChainLogoMetadata.js";
+import { ChainLogoMetadata } from "../../utils/ChainLogoMetadata.js";
 
 // TODO: create an index.js file that allows for multi imports in one line
-import logout from "../assets/logout-icon.svg";
-import textBubble from "../assets/text-bubble-icon.svg";
-import selectedAddressEllipse from "../assets/selected-address-ellipse.png";
-import continueIconColor from "../assets/continue-icon-color.svg";
-import continueIcon from "../assets/continue-icon.svg";
-import dropdown from "../assets/dropdown-icon.svg";
-import logo from "../assets/echooo.svg";
-import errorIcon from "../assets/error-icon.svg";
-import plusIcon from "../assets/plus-icon.svg";
-import avalanche from "../assets/avalanche-icon.svg";
-import ethereum from "../assets/ethereum-icon.svg";
-import polygon from "../assets/polygon-icon.svg";
-import changeKeysIcon from "../assets/change-keys-icon.svg";
-import sendMessagesIcon from "../assets/send-message-icon.svg";
-import "../styles/receivers.css";
+import logout from "../../assets/logout-icon.svg";
+import textBubble from "../../assets/text-bubble-icon.svg";
+import selectedAddressEllipse from "../../assets/selected-address-ellipse.png";
+import continueIconColor from "../../assets/continue-icon-color.svg";
+import continueIcon from "../../assets/continue-icon.svg";
+import dropdown from "../../assets/dropdown-icon.svg";
+import logo from "../../assets/echooo.svg";
+import errorIcon from "../../assets/error-icon.svg";
+import plusIcon from "../../assets/plus-icon.svg";
+import avalanche from "../../assets/avalanche-icon.svg";
+import ethereum from "../../assets/ethereum-icon.svg";
+import polygon from "../../assets/polygon-icon.svg";
+import changeKeysIcon from "../../assets/change-keys-icon.svg";
+import sendMessagesIcon from "../../assets/send-message-icon.svg";
+import "../../styles/receivers.css";
 
 // TODO: change init code so object is only instantiated once & make constants
 const initGraphClient = async () => {
@@ -51,7 +51,7 @@ const initGraphClient = async () => {
 };
 
 // TODO: make into own component once backend logic is complete
-const SendMessages = ({ receiverAddress, messages, setMessages }) => {
+const SendMessagesInterface = ({ receiverAddress, messages, setMessages }) => {
   const [message, setMessage] = useState("");
 
   const { address } = useAccount();
@@ -110,8 +110,8 @@ const SendMessages = ({ receiverAddress, messages, setMessages }) => {
           required
         />
         <button
-          type="submit"
-          class="flex flex-row justify-center items-center gap-[10px] text-white text-lg bg-[#333333] rounded-[30px] hover:bg-[#555555] font-medium px-[13.1px]"
+          class="flex flex-row justify-center items-center gap-[10px] text-white text-lg bg-[#333333] rounded-[30px] hover:bg-[#555555] font-medium px-[13.1px] disabled:opacity-25"
+          disabled={true}
         >
           <img height="35" width="35" src={plusIcon}></img>
         </button>
@@ -137,12 +137,12 @@ export default function MessagingPage({
   setActiveReceiver,
   activeIndex,
   setActiveIndex,
+  communicationAddress,
 }) {
   const { address } = useAccount();
   const { disconnect } = useDisconnect();
   const { chain } = useNetwork();
-  const { chains, error, isLoading, pendingChainId, switchNetwork } =
-    useSwitchNetwork();
+  const { chains } = useSwitchNetwork();
   const [messages, setMessages] = useState([]);
 
   const handleActiveReceiver = (e, index, address) => {
@@ -329,13 +329,19 @@ export default function MessagingPage({
                   alt=""
                 ></img>
               </button>
-              <button
-                className="flex flex-row justify-center items-center gap-[15px] px-5 py-3 bg-gradient-to-r from-[#00FFD1] to-[#FF007A] via-[#9b649c] text-white font-bold rounded-[30px] border-[3px] border-[#333333]"
-                onClick={toggleOpenNewChatModal}
-              >
-                Start new chat
-                <img src={textBubble} alt=""></img>
-              </button>
+              {communicationAddress ? (
+                <>
+                  <button
+                    className="flex flex-row justify-center items-center gap-[15px] px-5 py-3 bg-gradient-to-r from-[#00FFD1] to-[#FF007A] via-[#9b649c] text-white font-bold rounded-[30px] border-[3px] border-[#333333]"
+                    onClick={toggleOpenNewChatModal}
+                  >
+                    Start new chat
+                    <img src={textBubble} alt=""></img>
+                  </button>
+                </>
+              ) : (
+                <></>
+              )}
             </div>
           </div>
           {/* Reciever */}
@@ -360,7 +366,7 @@ export default function MessagingPage({
               setMessages={setMessages}
               receiverAddress={activeReceiverAddress}
             />
-            <SendMessages
+            <SendMessagesInterface
               messages={messages}
               setMessages={setMessages}
               receiverAddress={activeReceiverAddress}
