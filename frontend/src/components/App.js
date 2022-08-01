@@ -19,12 +19,13 @@ export default function App() {
   const [openModalConnect, setOpenModalConnect] = useState(false);
   const [openNewChatModal, setOpenNewChatModal] = useState(false);
   const [openCommAddressModal, setOpenCommAddressModal] = useState(false);
-  const [communicationSetup, setCommunicationSetup] = useState(false);
   const [newChatAddress, setNewChatAddress] = useState("");
   const [activeReceiverAddress, setActiveReceiver] = useState(
     "0x0000000000000000000000000000000000000000"
   );
-  const [chatAddresses, setChatAddresses] = useState([]);
+  const [chatAddresses, setChatAddresses] = useState(
+    JSON.parse(localStorage.getItem("chats")) || []
+  );
   const [activeIndex, setActiveIndex] = useState(0);
   const [communicationAddress, setCommunicationAddress] = useState(
     JSON.parse(localStorage.getItem("public-communication-address")) || ""
@@ -35,8 +36,6 @@ export default function App() {
   const toggleOpenNewChatModal = () => setOpenNewChatModal(!openNewChatModal);
   const toggleOpenCommAddressModal = () =>
     setOpenCommAddressModal(!openCommAddressModal);
-  const toggleCommunicationSetup = () =>
-    setCommunicationSetup(!communicationSetup);
 
   const { chain } = useNetwork();
   const { chains, error, isLoading, pendingChainId, switchNetwork } =
@@ -87,8 +86,6 @@ export default function App() {
         openModal={openNewChatModal}
         toggleOpenModal={toggleOpenNewChatModal}
         toggleOpenNewChatModal={toggleOpenNewChatModal}
-        communicationSetup={communicationSetup}
-        toggleCommunicationSetup={toggleCommunicationSetup}
         newChatAddress={newChatAddress}
         setNewChatAddress={setNewChatAddress}
         chatAddresses={chatAddresses}
@@ -114,7 +111,6 @@ export default function App() {
       ) : (
         <MessagingPage
           toggleOpenModalChainSelect={toggleOpenModalChainSelect}
-          communicationSetup={communicationSetup}
           toggleOpenCommAddressModal={toggleOpenCommAddressModal}
           toggleOpenNewChatModal={toggleOpenNewChatModal}
           chatAddresses={chatAddresses}
@@ -123,6 +119,7 @@ export default function App() {
           activeReceiverAddress={activeReceiverAddress}
           setActiveReceiver={setActiveReceiver}
           communicationAddress={communicationAddress}
+          setChatAddresses={setChatAddresses}
         />
       )}
     </div>

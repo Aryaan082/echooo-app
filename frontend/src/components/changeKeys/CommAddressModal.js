@@ -1,7 +1,7 @@
 import Modal from "react-modal";
 import React from "react";
 import EthCrypto from "eth-crypto";
-import { useAccount, useContract, useProvider, useSigner } from "wagmi";
+import { useAccount } from "wagmi";
 import { Oval } from "react-loader-spinner";
 
 import ContractInstances from "../../contracts/ContractInstances";

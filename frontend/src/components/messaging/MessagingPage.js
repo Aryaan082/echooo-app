@@ -27,9 +27,7 @@ import dropdown from "../../assets/dropdown-icon.svg";
 import logo from "../../assets/echooo.svg";
 import errorIcon from "../../assets/error-icon.svg";
 import plusIcon from "../../assets/plus-icon.svg";
-import avalanche from "../../assets/avalanche-icon.svg";
-import ethereum from "../../assets/ethereum-icon.svg";
-import polygon from "../../assets/polygon-icon.svg";
+import resetIcon from "../../assets/reset-icon.svg";
 import changeKeysIcon from "../../assets/change-keys-icon.svg";
 import sendMessagesIcon from "../../assets/send-message-icon.svg";
 import "../../styles/receivers.css";
@@ -129,7 +127,6 @@ const SendMessagesInterface = ({ receiverAddress, messages, setMessages }) => {
 
 export default function MessagingPage({
   toggleOpenModalChainSelect,
-  communicationSetup,
   toggleOpenCommAddressModal,
   toggleOpenNewChatModal,
   chatAddresses,
@@ -138,6 +135,7 @@ export default function MessagingPage({
   activeIndex,
   setActiveIndex,
   communicationAddress,
+  setChatAddresses,
 }) {
   const { address } = useAccount();
   const { disconnect } = useDisconnect();
@@ -239,12 +237,19 @@ export default function MessagingPage({
       className="flex flex-row h-[100vh] w-[100vw] bg-gradient-bg"
       style={{ backgroundRepeat: "round" }}
     >
-      {communicationSetup ? (
+      {console.log(chatAddresses.length)}
+      {chatAddresses.length > 0 ? (
         <>
           <div className="border-r-[3px] border-[#333333] border-opacity-10 w-[30%] pt-[4vh]">
-            <code className="text-xl font-semibold pl-[2vw]">
-              Your anon chats
-            </code>
+            <div className="flex flex-row justify-between items-center px-[2vw]">
+              <code className="text-xl font-semibold">Your anon chats</code>
+              <img
+                className="h-[25px] hover:cursor-pointer"
+                src={resetIcon}
+                alt=""
+                onClick={() => setChatAddresses([])}
+              ></img>
+            </div>
             <ul className="Receivers">
               {chatAddresses.map((address, index) => {
                 return (

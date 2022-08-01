@@ -21,8 +21,6 @@ const modalStyles = {
 export default function NewChatModal({
   openModal,
   toggleOpenModal,
-  communicationSetup,
-  toggleCommunicationSetup,
   newChatAddress,
   setNewChatAddress,
   chatAddresses,
@@ -31,6 +29,10 @@ export default function NewChatModal({
   setActiveIndex,
 }) {
   const handleChatInputChange = (e) => setNewChatAddress(e.target.value);
+
+  React.useEffect(() => {
+    localStorage.setItem("chats", JSON.stringify(chatAddresses));
+  }, [chatAddresses]);
 
   return (
     <Modal
@@ -50,7 +52,7 @@ export default function NewChatModal({
             className="flex flex-row justify-center text-lg items-center gap-[15px] px-5 py-3 bg-[#555555] text-white font-bold rounded-[8px] border-[3px] border-[#333333] disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={
               // communication is setup when at least 1 chat is open
-              communicationSetup
+              chatAddresses
                 ? () => {
                     toggleOpenModal();
                     setChatAddresses([...chatAddresses, newChatAddress]);
@@ -59,7 +61,6 @@ export default function NewChatModal({
                     setNewChatAddress("");
                   }
                 : () => {
-                    toggleCommunicationSetup();
                     toggleOpenModal();
                     setChatAddresses([...chatAddresses, newChatAddress]);
                     setActiveReceiver(newChatAddress);
