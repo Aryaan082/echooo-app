@@ -23,6 +23,7 @@ export default function App() {
   const [activeReceiverAddress, setActiveReceiver] = useState(
     "0x0000000000000000000000000000000000000000"
   );
+  const [broadcasting, setBroadcasting] = React.useState(false);
   const [chatAddresses, setChatAddresses] = useState(
     JSON.parse(localStorage.getItem("chats")) || []
   );
@@ -81,6 +82,8 @@ export default function App() {
         openModal={openCommAddressModal}
         toggleOpenModal={toggleOpenCommAddressModal}
         setCommunicationAddress={setCommunicationAddress}
+        broadcasting={broadcasting}
+        setBroadcasting={setBroadcasting}
       />
       <NewChatModal
         openModal={openNewChatModal}

@@ -63,15 +63,15 @@ export default function CommAddressModal({
   toggleOpenModal,
   toggleKeysSetup,
   setCommunicationAddress,
+  broadcasting,
+  setBroadcasting,
 }) {
-  const [isLoading, setLoading] = React.useState(false);
-
   const { address } = useAccount();
 
   const echoContract = ContractInstances();
 
   const handleSetCommunicationAddress = (e) => {
-    setLoading(true);
+    setBroadcasting(true);
     createCommunicationAddress(echoContract, address)
       .then(() => {
         const localPublicKeys = JSON.parse(
@@ -80,12 +80,12 @@ export default function CommAddressModal({
         console.log("local address >>>", address);
         const signerPublicKey = localPublicKeys[address];
         setCommunicationAddress(signerPublicKey);
-        setLoading(false);
+        setBroadcasting(false);
         toggleOpenModal();
         toggleKeysSetup();
       })
       .catch(() => {
-        setLoading(false);
+        setBroadcasting(false);
       });
   };
 
@@ -95,7 +95,7 @@ export default function CommAddressModal({
       onRequestClose={toggleOpenModal}
       style={modalStyles}
     >
-      {isLoading ? (
+      {broadcasting ? (
         <div className="flex flex-col w-[384px] items-center justify-center gap-[20px]">
           <Oval
             ariaLabel="loading-indicator"
