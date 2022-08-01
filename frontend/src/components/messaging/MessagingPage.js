@@ -9,29 +9,28 @@ import {
 import { ethers } from "ethers";
 import EthCrypto from "eth-crypto";
 import { createClient } from "urql";
-import EchoJSON from "../contracts/Echo.sol/Echo.json";
+import EchoJSON from "../../contracts/Echo.sol/Echo.json";
 import "isomorphic-unfetch"; // required for urql: https://github.com/FormidableLabs/urql/issues/283
 
+import ContractInstances from "../../contracts/ContractInstances";
 import ChatBox from "./ChatBox";
 
-import { ChainLogoMetadata } from "../utils/ChainLogoMetadata.js";
+import { ChainLogoMetadata } from "../../utils/ChainLogoMetadata.js";
 
 // TODO: create an index.js file that allows for multi imports in one line
-import logout from "../assets/logout-icon.svg";
-import textBubble from "../assets/text-bubble-icon.svg";
-import selectedAddressEllipse from "../assets/selected-address-ellipse.png";
-import continueIconColor from "../assets/continue-icon-color.svg";
-import continueIcon from "../assets/continue-icon.svg";
-import dropdown from "../assets/dropdown-icon.svg";
-import logo from "../assets/echooo.svg";
-import errorIcon from "../assets/error-icon.svg";
-import plusIcon from "../assets/plus-icon.svg";
-import avalanche from "../assets/avalanche-icon.svg";
-import ethereum from "../assets/ethereum-icon.svg";
-import polygon from "../assets/polygon-icon.svg";
-import changeKeysIcon from "../assets/change-keys-icon.svg";
-import sendMessagesIcon from "../assets/send-message-icon.svg";
-import "../styles/receivers.css";
+import logout from "../../assets/logout-icon.svg";
+import textBubble from "../../assets/text-bubble-icon.svg";
+import selectedAddressEllipse from "../../assets/selected-address-ellipse.png";
+import continueIconColor from "../../assets/continue-icon-color.svg";
+import continueIcon from "../../assets/continue-icon.svg";
+import dropdown from "../../assets/dropdown-icon.svg";
+import logo from "../../assets/echooo.svg";
+import errorIcon from "../../assets/error-icon.svg";
+import plusIcon from "../../assets/plus-icon.svg";
+import resetIcon from "../../assets/reset-icon.svg";
+import changeKeysIcon from "../../assets/change-keys-icon.svg";
+import sendMessagesIcon from "../../assets/send-message-icon.svg";
+import "../../styles/receivers.css";
 
 // TODO: change init code so object is only instantiated once & make constants
 const initGraphClient = async () => {
@@ -48,33 +47,18 @@ const initGraphClient = async () => {
   });
   return graphClient;
 };
-const initConnection = async () => {
-  let contractAddress;
-  const chainID = parseInt(window.ethereum.networkVersion);
-  if (ChainLogoMetadata[chainID].name === "Avalanche Fuji") {
-    contractAddress = "0x79DD6a9aF59dE8911E5Bd83835E960010Ff6887A";
-  } else {
-    contractAddress = "0x21e29E3038AeCC76173103A5cb9711Ced1D23C01";
-  }
-  const provider = new ethers.providers.Web3Provider(window.ethereum);
-  const echoContract = await new ethers.Contract(
-    contractAddress,
-    EchoJSON.abi,
-    provider
-  );
-  return echoContract;
-};
 
 // TODO: make into own component once backend logic is complete
-const SendMessages = ({ receiverAddress, messages, setMessages }) => {
+const SendMessagesInterface = ({ receiverAddress, messages, setMessages }) => {
   const [message, setMessage] = useState("");
+
+  const { address } = useAccount();
+
+  const echoContract = ContractInstances();
 
   const handleSubmitMessage = async (e) => {
     e.preventDefault();
 
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const signer = provider.getSigner();
-    const echoContract = await initConnection();
     const senderMessage = message;
     const BIdentity = receiverAddress;
 
@@ -98,11 +82,9 @@ const SendMessages = ({ receiverAddress, messages, setMessages }) => {
     );
     const messageEncryptedString = EthCrypto.cipher.stringify(messageEncrypted);
 
-    await echoContract
-      .connect(signer)
-      .logMessage(BIdentity, messageEncryptedString);
+    await echoContract.logMessage(BIdentity, messageEncryptedString);
     const newMessage = {
-      from: signer.address,
+      from: address,
       to: receiverAddress,
       message: senderMessage,
     };
@@ -126,8 +108,8 @@ const SendMessages = ({ receiverAddress, messages, setMessages }) => {
           required
         />
         <button
-          type="submit"
-          class="flex flex-row justify-center items-center gap-[10px] text-white text-lg bg-[#333333] rounded-[30px] hover:bg-[#555555] font-medium px-[13.1px]"
+          class="flex flex-row justify-center items-center gap-[10px] text-white text-lg bg-[#333333] rounded-[30px] hover:bg-[#555555] font-medium px-[13.1px] disabled:opacity-25"
+          disabled={true}
         >
           <img height="35" width="35" src={plusIcon}></img>
         </button>
@@ -145,7 +127,6 @@ const SendMessages = ({ receiverAddress, messages, setMessages }) => {
 
 export default function MessagingPage({
   toggleOpenModalChainSelect,
-  communicationSetup,
   toggleOpenCommAddressModal,
   toggleOpenNewChatModal,
   chatAddresses,
@@ -153,12 +134,13 @@ export default function MessagingPage({
   setActiveReceiver,
   activeIndex,
   setActiveIndex,
+  communicationAddress,
+  setChatAddresses,
 }) {
   const { address } = useAccount();
   const { disconnect } = useDisconnect();
   const { chain } = useNetwork();
-  const { chains, error, isLoading, pendingChainId, switchNetwork } =
-    useSwitchNetwork();
+  const { chains } = useSwitchNetwork();
   const [messages, setMessages] = useState([]);
 
   const handleActiveReceiver = (e, index, address) => {
@@ -255,12 +237,19 @@ export default function MessagingPage({
       className="flex flex-row h-[100vh] w-[100vw] bg-gradient-bg"
       style={{ backgroundRepeat: "round" }}
     >
-      {communicationSetup ? (
+      {console.log(chatAddresses.length)}
+      {chatAddresses.length > 0 ? (
         <>
           <div className="border-r-[3px] border-[#333333] border-opacity-10 w-[30%] pt-[4vh]">
-            <code className="text-xl font-semibold pl-[2vw]">
-              Your anon chats
-            </code>
+            <div className="flex flex-row justify-between items-center px-[2vw]">
+              <code className="text-xl font-semibold">Your anon chats</code>
+              <img
+                className="h-[25px] hover:cursor-pointer"
+                src={resetIcon}
+                alt=""
+                onClick={() => setChatAddresses([])}
+              ></img>
+            </div>
             <ul className="Receivers">
               {chatAddresses.map((address, index) => {
                 return (
@@ -345,18 +334,23 @@ export default function MessagingPage({
                   alt=""
                 ></img>
               </button>
-              <button
-                className="flex flex-row justify-center items-center gap-[15px] px-5 py-3 bg-gradient-to-r from-[#00FFD1] to-[#FF007A] via-[#9b649c] text-white font-bold rounded-[30px] border-[3px] border-[#333333]"
-                onClick={toggleOpenNewChatModal}
-              >
-                Start new chat
-                <img src={textBubble} alt=""></img>
-              </button>
+              {communicationAddress ? (
+                <>
+                  <button
+                    className="flex flex-row justify-center items-center gap-[15px] px-5 py-3 bg-gradient-to-r from-[#00FFD1] to-[#FF007A] via-[#9b649c] text-white font-bold rounded-[30px] border-[3px] border-[#333333]"
+                    onClick={toggleOpenNewChatModal}
+                  >
+                    Start new chat
+                    <img src={textBubble} alt=""></img>
+                  </button>
+                </>
+              ) : (
+                <></>
+              )}
             </div>
           </div>
           {/* Reciever */}
-          {/* {chatAddresses.length > 0 ? ( */}
-          {true ? (
+          {chatAddresses.length > 0 ? (
             <div className="w-full" style={{ height: "calc(5vh - 100px}" }}>
               <div className="flex justify-center align-center">
                 <div className="shadow-md flex flex-wrap rounded-[10px] border-[1px] p-5 bg-[rgba(241,245,249,0.5)] text-center text-md break-words">
@@ -370,15 +364,14 @@ export default function MessagingPage({
         </div>
 
         {/* Chat */}
-        {/* {chatAddresses.length > 0 ? ( */}
-        {true ? (
+        {chatAddresses.length > 0 ? (
           <div className="flex flex-col">
             <ChatBox
               messages={messages}
               setMessages={setMessages}
               receiverAddress={activeReceiverAddress}
             />
-            <SendMessages
+            <SendMessagesInterface
               messages={messages}
               setMessages={setMessages}
               receiverAddress={activeReceiverAddress}

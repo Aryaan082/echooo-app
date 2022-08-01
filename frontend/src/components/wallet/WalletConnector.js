@@ -1,9 +1,9 @@
 import { useConnect } from "wagmi";
 import { Oval } from "react-loader-spinner";
 
-import metamask from "../assets/metamask-wallet-logo.png";
-import coinbase from "../assets/coinbase-wallet-logo.svg";
-import walletConnect from "../assets/wallet-connect-wallet-logo.svg";
+import metamask from "../../assets/metamask-wallet-logo.png";
+import coinbase from "../../assets/coinbase-wallet-logo.svg";
+import walletConnect from "../../assets/wallet-connect-wallet-logo.svg";
 
 export default function WalletConnector() {
   const { connect, connectors, error, isLoading } = useConnect();
@@ -17,7 +17,20 @@ export default function WalletConnector() {
 
   return (
     <div>
-      {!isLoading ? (
+      {isLoading ? (
+        <div className="flex flex-col w-[384px] items-center justify-center gap-[20px]">
+          <Oval
+            ariaLabel="loading-indicator"
+            height={40}
+            width={40}
+            strokeWidth={3}
+            strokeWidthSecondary={3}
+            color="black"
+            secondaryColor="white"
+          />
+          <div className="text-xl font-medium">Connecting...</div>
+        </div>
+      ) : (
         <>
           <div className="font-medium text-left pb-[20px]">
             Connect a wallet
@@ -34,6 +47,7 @@ export default function WalletConnector() {
                 <img
                   className="flex items-center w-[25px]"
                   src={walletOptionLogos[connector.id]}
+                  alt=""
                 ></img>
               </button>
             ))}
@@ -41,19 +55,6 @@ export default function WalletConnector() {
             {error && <div>{error.message}</div>}
           </div>
         </>
-      ) : (
-        <div className="flex flex-col w-[384px] items-center justify-center gap-[20px]">
-          <Oval
-            ariaLabel="loading-indicator"
-            height={40}
-            width={40}
-            strokeWidth={3}
-            strokeWidthSecondary={3}
-            color="black"
-            secondaryColor="white"
-          />
-          <div className="text-xl font-medium">Connecting...</div>
-        </div>
       )}
     </div>
   );

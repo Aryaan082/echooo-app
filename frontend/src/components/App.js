@@ -1,11 +1,11 @@
 // import * as dotenv from "dotenv";
 import React, { useEffect, useState } from "react";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
-import WalletModal from "./WalletModal";
-import ChainSelectorModal from "./ChainSelectorModal";
-import NewChatModal from "./NewChatModal";
-import MessagingPage from "./MessagingPage";
-import CommAddressModal from "./CommAddressModal";
+import WalletModal from "./wallet/WalletModal";
+import ChainSelectorModal from "./chain/ChainSelectorModal";
+import NewChatModal from "./startNewChat/NewChatModal";
+import MessagingPage from "./messaging/MessagingPage";
+import CommAddressModal from "./changeKeys/CommAddressModal";
 
 import gradientOne from "../assets/gradient-one.svg";
 import gradientTwo from "../assets/gradient-two.svg";
@@ -19,12 +19,13 @@ export default function App() {
   const [openModalConnect, setOpenModalConnect] = useState(false);
   const [openNewChatModal, setOpenNewChatModal] = useState(false);
   const [openCommAddressModal, setOpenCommAddressModal] = useState(false);
-  const [communicationSetup, setCommunicationSetup] = useState(false);
   const [newChatAddress, setNewChatAddress] = useState("");
   const [activeReceiverAddress, setActiveReceiver] = useState(
     "0x0000000000000000000000000000000000000000"
   );
-  const [chatAddresses, setChatAddresses] = useState([]);
+  const [chatAddresses, setChatAddresses] = useState(
+    JSON.parse(localStorage.getItem("chats")) || []
+  );
   const [activeIndex, setActiveIndex] = useState(0);
   const [communicationAddress, setCommunicationAddress] = useState(
     JSON.parse(localStorage.getItem("public-communication-address")) || ""
@@ -36,8 +37,6 @@ export default function App() {
   const toggleOpenCommAddressModal = () =>
     setOpenCommAddressModal(!openCommAddressModal);
 
-  const toggleCommunicationSetup = () =>
-    setCommunicationSetup(!communicationSetup);
   const { chain } = useNetwork();
   const { chains, error, isLoading, pendingChainId, switchNetwork } =
     useSwitchNetwork();
@@ -87,8 +86,6 @@ export default function App() {
         openModal={openNewChatModal}
         toggleOpenModal={toggleOpenNewChatModal}
         toggleOpenNewChatModal={toggleOpenNewChatModal}
-        communicationSetup={communicationSetup}
-        toggleCommunicationSetup={toggleCommunicationSetup}
         newChatAddress={newChatAddress}
         setNewChatAddress={setNewChatAddress}
         chatAddresses={chatAddresses}
@@ -114,8 +111,6 @@ export default function App() {
       ) : (
         <MessagingPage
           toggleOpenModalChainSelect={toggleOpenModalChainSelect}
-          communicationSetup={communicationSetup}
-          toggleCommunicationSetup={toggleCommunicationSetup}
           toggleOpenCommAddressModal={toggleOpenCommAddressModal}
           toggleOpenNewChatModal={toggleOpenNewChatModal}
           chatAddresses={chatAddresses}
@@ -123,6 +118,8 @@ export default function App() {
           setActiveIndex={setActiveIndex}
           activeReceiverAddress={activeReceiverAddress}
           setActiveReceiver={setActiveReceiver}
+          communicationAddress={communicationAddress}
+          setChatAddresses={setChatAddresses}
         />
       )}
     </div>

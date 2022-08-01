@@ -1,5 +1,5 @@
 import moment from "moment";
-import "../styles/message.css";
+import "../../styles/message.css";
 
 const ReceiveMessageContainer = (receiverAddress, message, timestamp) => {
   const messageTimestamp = moment.unix(timestamp).format("DD-MM-YYYY HH:mm");
