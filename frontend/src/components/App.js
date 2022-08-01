@@ -70,31 +70,9 @@ export default function App() {
         backgroundSize: "cover",
       }}
     >
-      <ChainSelectorModal
-        openModal={chainSelect}
-        toggleOpenModal={toggleOpenModalChainSelect}
-      />
       <WalletModal
         openModal={openModalConnect}
         toggleOpenModal={toggleOpenModalConnect}
-      />
-      <CommAddressModal
-        openModal={openCommAddressModal}
-        toggleOpenModal={toggleOpenCommAddressModal}
-        setCommunicationAddress={setCommunicationAddress}
-        broadcasting={broadcasting}
-        setBroadcasting={setBroadcasting}
-      />
-      <NewChatModal
-        openModal={openNewChatModal}
-        toggleOpenModal={toggleOpenNewChatModal}
-        toggleOpenNewChatModal={toggleOpenNewChatModal}
-        newChatAddress={newChatAddress}
-        setNewChatAddress={setNewChatAddress}
-        chatAddresses={chatAddresses}
-        setChatAddresses={setChatAddresses}
-        setActiveReceiver={setActiveReceiver}
-        setActiveIndex={setActiveIndex}
       />
       {!connectedWallet ? (
         <div className="flex justify-center items-center h-[100vh]">
@@ -112,18 +90,42 @@ export default function App() {
           </div>
         </div>
       ) : (
-        <MessagingPage
-          toggleOpenModalChainSelect={toggleOpenModalChainSelect}
-          toggleOpenCommAddressModal={toggleOpenCommAddressModal}
-          toggleOpenNewChatModal={toggleOpenNewChatModal}
-          chatAddresses={chatAddresses}
-          activeIndex={activeIndex}
-          setActiveIndex={setActiveIndex}
-          activeReceiverAddress={activeReceiverAddress}
-          setActiveReceiver={setActiveReceiver}
-          communicationAddress={communicationAddress}
-          setChatAddresses={setChatAddresses}
-        />
+        <div>
+          <ChainSelectorModal
+            openModal={chainSelect}
+            toggleOpenModal={toggleOpenModalChainSelect}
+          />
+          <CommAddressModal
+            openModal={openCommAddressModal}
+            toggleOpenModal={toggleOpenCommAddressModal}
+            setCommunicationAddress={setCommunicationAddress}
+            broadcasting={broadcasting}
+            setBroadcasting={setBroadcasting}
+          />
+          <NewChatModal
+            openModal={openNewChatModal}
+            toggleOpenModal={toggleOpenNewChatModal}
+            toggleOpenNewChatModal={toggleOpenNewChatModal}
+            newChatAddress={newChatAddress}
+            setNewChatAddress={setNewChatAddress}
+            chatAddresses={chatAddresses}
+            setChatAddresses={setChatAddresses}
+            setActiveReceiver={setActiveReceiver}
+            setActiveIndex={setActiveIndex}
+          />
+          <MessagingPage
+            toggleOpenModalChainSelect={toggleOpenModalChainSelect}
+            toggleOpenCommAddressModal={toggleOpenCommAddressModal}
+            toggleOpenNewChatModal={toggleOpenNewChatModal}
+            chatAddresses={chatAddresses}
+            activeIndex={activeIndex}
+            setActiveIndex={setActiveIndex}
+            activeReceiverAddress={activeReceiverAddress}
+            setActiveReceiver={setActiveReceiver}
+            communicationAddress={communicationAddress}
+            setChatAddresses={setChatAddresses}
+          />
+        </div>
       )}
     </div>
   );

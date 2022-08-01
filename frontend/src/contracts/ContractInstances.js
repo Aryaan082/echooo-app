@@ -7,7 +7,7 @@ const contractEchoAddress = {
   80001: "0x21e29E3038AeCC76173103A5cb9711Ced1D23C01",
 };
 
-export default async function ContractInstances() {
+export default function ContractInstances() {
   const { data: signer } = useSigner();
   const { chain } = useNetwork();
 
