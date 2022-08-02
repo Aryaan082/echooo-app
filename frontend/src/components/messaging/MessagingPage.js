@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   useAccount,
   useDisconnect,
@@ -9,6 +9,7 @@ import {
 import EthCrypto from "eth-crypto";
 import { createClient } from "urql";
 import { Oval } from "react-loader-spinner";
+import moment from "moment";
 import "isomorphic-unfetch"; // required for urql: https://github.com/FormidableLabs/urql/issues/283
 
 import ContractInstances from "../../contracts/ContractInstances";
@@ -30,6 +31,19 @@ import changeKeysIcon from "../../assets/change-keys-icon.svg";
 import sendMessagesIcon from "../../assets/send-message-icon.svg";
 import "../../styles/receivers.css";
 
+// TODO: move to util functions
+// A promise that has a time out -> used for tx.wait() since it doesn't throw an error
+const promiseTimeout = (millis, promise) => {
+  const timeout = new Promise((resolve, reject) =>
+      setTimeout(
+          () => reject(`Timed out after ${millis} ms.`),
+          millis));
+  return Promise.race([
+      promise,
+      timeout
+  ]);
+};
+
 // TODO: change init code so object is only instantiated once & make constants
 const initGraphClient = async () => {
   const chainID = parseInt(window.ethereum.networkVersion);
@@ -50,9 +64,7 @@ const initGraphClient = async () => {
 const SendMessagesInterface = ({ receiverAddress, messages, setMessageLog, messagesState, setMessagesState }) => {
   const [senderMessage, setSenderMessage] = useState("");
   const { address } = useAccount();
-  const echoContract = ContractInstances();
-  console.log("messages >>>", messages)
-  console.log("send messages interface >>>", messages)
+  const echoContract = ContractInstances();  
   const handleSubmitMessage = async (e) => {
     e.preventDefault();
     setMessagesState({ [receiverAddress]: true })
@@ -88,45 +100,37 @@ const SendMessagesInterface = ({ receiverAddress, messages, setMessageLog, messa
       messageEncryptedReceiver = EthCrypto.cipher.stringify(messageEncryptedReceiver);
 
       const tx = await echoContract.logMessage(receiverAddress, messageEncryptedSender, messageEncryptedReceiver);
-      const txr = await tx.wait();
-      console.log("tx receipt >>>", txr)
+      await tx.wait();
+      // await promiseTimeout(60 * 1000, );
+      
     }
 
     const newMessageState = { ...messagesState, [receiverAddress]: false }
     sendMessage(receiverAddress, messages).then(() => {
-      // const newMessagesLog = {...messages, {from: address, to: receiverAddress, }}
-
-      const newReceiverMessageLog = {[receiverAddress]: {...messages[receiverAddress], [messages[receiverAddress].length]: {
+      const newReceiverMessageLog = [...messages[receiverAddress], {
         from: address,        
         message: senderMessage,
-        timestamp: "1659388729"
-      }}}      
-      console.log("new log >>>", newReceiverMessageLog)
+        timestamp: `${moment().unix()}`
+      }]    
+      
       const newMessageLog = messages
-      console.log("new message log >>>", newMessageLog)
-      Object.assign(newMessageLog, newReceiverMessageLog);
-      setMessageLog(newMessageLog);
-      console.log("new message log 2.0 >>>", newMessageLog)
+      newMessageLog[receiverAddress] = newReceiverMessageLog   
+      setMessageLog(newMessageLog);      
       setMessagesState(newMessageState)
       
     }).catch((err) => {
-      console.log("error:", err.message)
-      // TODO: add visual indictation of message failiure
-      const newReceiverMessageLog = {[receiverAddress]: {...messages[receiverAddress], [messages[receiverAddress].length]: {
+      console.log("Sending Message Error:", err)
+      // TODO: make message indicative of error by changing color 
+      const newReceiverMessageLog = [...messages[receiverAddress], {
         from: address,        
-        message: "message failed...",
-        timestamp: "1659388729"
-      }}}      
-      console.log("new log >>>", newReceiverMessageLog)
+        message: "Error: Message failed please try again ...",
+        timestamp: `${moment().unix()}`
+      }]    
+      
       const newMessageLog = messages
-      console.log("new message log >>>", newMessageLog)
-      Object.assign(newMessageLog, newReceiverMessageLog);
-
-      console.log("new new message log >>>", newMessageLog)
-      setMessageLog(newMessageLog);
-      console.log("new message log 2.0 >>>", newMessageLog)
-      setMessagesState(newMessageState)
-
+      newMessageLog[receiverAddress] = newReceiverMessageLog   
+      setMessageLog(newMessageLog);      
+      setMessagesState(newMessageState)      
     })
     setSenderMessage("");
   };
@@ -152,7 +156,7 @@ const SendMessagesInterface = ({ receiverAddress, messages, setMessageLog, messa
           <img height="35" width="35" src={plusIcon}></img>
         </button>
         {messagesState[receiverAddress] ?
-          <div className="flex flex-col w-[384px] items-center justify-center gap-[20px]">
+          <div className="flex flex-row w-[384px] items-center justify-center gap-[20px]">
             <Oval
               ariaLabel="loading-indicator"
               height={40}
@@ -201,91 +205,153 @@ export default function MessagingPage({
     setActiveReceiver(address);
   };
 
+  // const getRecentMessages = useCallback(async () => {
+  //   try {
+
+  //   } catch (err) {
+  //     console.log("Error getRecentMessages:", err)
+  //   }
+  // })
   useEffect(() => {
     // TODO: cache messages
     // TODO: if messages already populates check if there's new messages, if so append state with new messages, else do not continue
+    if (activeReceiverAddress === "0x0000000000000000000000000000000000000000") {
+      return;
+    }
     const getMessagesAsync = async () => {
       const senderAddress = address.toLowerCase();
       let senderPrivateKey = JSON.parse(
         localStorage.getItem("private-communication-address")
       );
       senderPrivateKey = senderPrivateKey[address];
+      if (messages[activeReceiverAddress] == null) {                      
+        console.log("local private key >>", senderPrivateKey);
 
-      console.log("local private key >>", senderPrivateKey);
-
-      // TODO: query validation using native library to prevent query injection vulnerability
-      const identitiesTimestampQuery = `
-        query {
-          identities(
-            where: {from: "${senderAddress}"}
-            first: 1
-            orderBy: timestamp
-            orderDirection: desc
-          ) {
-            communicationAddress
-            timestamp
-          }
-        }
-      `;
-      const graphClient = await initGraphClient();
-      const dataIdentity = await graphClient
-        .query(identitiesTimestampQuery)
-        .toPromise();
-      const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
-      const dataIdentityCommAddress = dataIdentity.data.identities[0].communicationAddress; // TODO: Use this to check that this address matches our comm address
-      console.log("data timestamp >>>", dataIdentityTimestamp);
-
-      const messagesQuery = `
-        query {
-          messages(            
-            orderBy: timestamp
-            orderDirection: asc
-            where: {
-              from_in: ["${senderAddress}", "${activeReceiverAddress}"],
-              receiver_in: ["${senderAddress}", "${activeReceiverAddress}"]
-              timestamp_gte: "${dataIdentityTimestamp}"
+        // TODO: query validation using native library to prevent query injection vulnerability
+        const identitiesTimestampQuery = `
+          query {
+            identities(
+              where: {from: "${senderAddress}"}
+              first: 1
+              orderBy: timestamp
+              orderDirection: desc
+            ) {
+              communicationAddress
+              timestamp
             }
-        
-          ) {
-            from
-            senderMessage
-            receiverMessage
-            timestamp
           }
+        `;
+        const graphClient = await initGraphClient();
+        const dataIdentity = await graphClient
+          .query(identitiesTimestampQuery)
+          .toPromise();
+        const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
+        const dataIdentityCommAddress = dataIdentity.data.identities[0].communicationAddress; // TODO: Use this to check that this address matches our comm address
+
+        const messagesQuery = `
+          query {
+            messages(            
+              orderBy: timestamp
+              orderDirection: asc
+              where: {
+                from_in: ["${senderAddress}", "${activeReceiverAddress}"],
+                receiver_in: ["${senderAddress}", "${activeReceiverAddress}"]
+                timestamp_gte: "${dataIdentityTimestamp}"
+              }
+          
+            ) {
+              from
+              senderMessage
+              receiverMessage
+              timestamp
+            }
+          }
+        `;
+        const dataMessages = await graphClient.query(messagesQuery).toPromise();
+        const dataMessagesParsed = dataMessages.data.messages;
+        console.log("data messages parsed >>>", dataMessages);
+        const messageLog = dataMessagesParsed;
+        for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
+          let metaDataMessages = await dataMessagesParsed[idx];
+          let message = "";
+
+          // Decrypt sender message
+          if (metaDataMessages.from === senderAddress) {
+            message = metaDataMessages.senderMessage;
+          } else {
+            // Decrypt receiver message
+            message = metaDataMessages.receiverMessage;
+          }
+
+          const decryptedMessage = await EthCrypto.decryptWithPrivateKey(
+            senderPrivateKey,
+            EthCrypto.cipher.parse(message)
+          );
+          messageLog[idx].message = decryptedMessage;
+
+          console.log(`Decrypted message ${idx} >>>`, decryptedMessage);
         }
-      `;
-      const dataMessages = await graphClient.query(messagesQuery).toPromise();
-      const dataMessagesParsed = dataMessages.data.messages;
-      console.log("data messages parsed >>>", dataMessages);
-      const messageLog = dataMessagesParsed;
-      for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
-        let metaDataMessages = await dataMessagesParsed[idx];
-        let message = "";
-
-        console.log("sender address", senderAddress)
-        console.log("from message", metaDataMessages.from)
-
-        // Decrypt sender message
-        if (metaDataMessages.from === senderAddress) {
-          message = metaDataMessages.senderMessage;
-        } else {
-          // Decrypt receiver message
-          message = metaDataMessages.receiverMessage;
+        const newMessageLog = { ...messages, [activeReceiverAddress]: messageLog }     
+        setMessageLog(newMessageLog);
+        const interval = setInterval(async (newMessage, activeReceiverAddress) => {
+          console.log("messages >>>", newMessage)
+          console.log(activeReceiverAddress)
+          const mostRecentMessageMeta = newMessage[activeReceiverAddress].at(-1);
+          console.log(mostRecentMessageMeta)
+          const messagesQuery = `
+          query {
+            messages(            
+              orderBy: timestamp
+              orderDirection: asc
+              where: {
+                from_in: ["${senderAddress}", "${activeReceiverAddress}"],
+                receiver_in: ["${senderAddress}", "${activeReceiverAddress}"]
+                timestamp_gte: "${mostRecentMessageMeta.timestamp}"
+              }
+          
+            ) {
+              from
+              senderMessage
+              receiverMessage
+              timestamp
+            }
+          }
+        `;
+        const graphClient = await initGraphClient();
+        const dataMessages = await graphClient.query(messagesQuery).toPromise();
+        const dataMessagesParsed = dataMessages.data.messages;
+        console.log("data messages parsed >>>", dataMessages);
+        const messageLog = dataMessagesParsed;
+        console.log("message log >>>", messageLog)
+        for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
+          let metaDataMessages = await dataMessagesParsed[idx];
+          let message = "";
+  
+          // Decrypt sender message
+          if (metaDataMessages.from === senderAddress) {
+            message = metaDataMessages.senderMessage;
+          } else {
+            // Decrypt receiver message
+            message = metaDataMessages.receiverMessage;
+          }
+  
+          const decryptedMessage = await EthCrypto.decryptWithPrivateKey(
+            senderPrivateKey,
+            EthCrypto.cipher.parse(message)
+          );
+          messageLog[idx].message = decryptedMessage;
+  
+          console.log(`Decrypted message ${idx} >>>`, decryptedMessage);
         }
-
-        const decryptedMessage = await EthCrypto.decryptWithPrivateKey(
-          senderPrivateKey,
-          EthCrypto.cipher.parse(message)
-        );
-        messageLog[idx].message = decryptedMessage;
-
-        console.log(`Decrypted message ${idx} >>>`, decryptedMessage);
+        const newReceiverMessages = [...newMessage[activeReceiverAddress], ...messageLog]
+        const newMessageLog = { ...newMessage, [activeReceiverAddress]: newReceiverMessages }
+        setMessageLog(newMessageLog);
+        console.log("running")
+          }, 5 * 1000, newMessageLog, activeReceiverAddress);
+          return () => clearInterval(interval)
+      }         
       }
-      const newMessageLog = { ...messages, [activeReceiverAddress]: messageLog }
-      setMessageLog(newMessageLog);
-      console.log("message log >>>", newMessageLog)
-      console.log("messages from log >>>", messageLog)
-    };
+      
     if (activeReceiverAddress !== "") {
       getMessagesAsync();
     }
@@ -426,12 +492,14 @@ export default function MessagingPage({
 
         {/* Chat */}
         {chatAddresses.length > 0 ? (
-          <div className="flex flex-col">
-            <ChatBox
-              messages={messages}
-              setMessageLog={setMessageLog}
-              receiverAddress={activeReceiverAddress}
-            />
+          <div className="flex flex-col overflow-y-auto">
+            <div className="overflow-y-auto">
+              <ChatBox              
+                messages={messages}
+                setMessageLog={setMessageLog}
+                receiverAddress={activeReceiverAddress}
+              />
+            </div>            
             <SendMessagesInterface
               messages={messages}
               setMessageLog={setMessageLog}

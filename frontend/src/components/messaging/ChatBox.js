@@ -5,9 +5,8 @@ const renderChat = (receiverAddress, messages) => {
   const chatJSX = [];
   const receiverAddressLowerCase = receiverAddress.toLowerCase();
   const messageLog = messages[receiverAddress];
-  console.log("message log render chat >>>", messageLog)
-  console.log("message log render chat address >>>", receiverAddress)
-  if (messageLog == null || messageLog.length === 0) {
+
+  if (messageLog == null) {
     return [];
   }
   
@@ -23,6 +22,7 @@ const renderChat = (receiverAddress, messages) => {
 }
 const ChatBox = ({ receiverAddress, messages, setMessageLog }) => {
   const chat = renderChat(receiverAddress, messages);
+  console.log("chat >>>", chat)
   return (
     <>
       {chat}
