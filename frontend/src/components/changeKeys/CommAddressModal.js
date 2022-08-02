@@ -32,8 +32,6 @@ const createCommunicationAddress = async (echoContract, address) => {
   let localPrivateKeys = JSON.parse(
     localStorage.getItem("private-communication-address")
   );
-  // console.log("initial public keys >>>", localPublicKeys);
-  // console.log("initial private keys >>>", localPrivateKeys);
 
   if (localPublicKeys === null || localPrivateKeys === null) {
     localPublicKeys = {};
@@ -46,11 +44,12 @@ const createCommunicationAddress = async (echoContract, address) => {
   const newLocalPrivateKeys = Object.assign({}, localPrivateKeys, {
     [address]: privateKey,
   });
-  console.log("new public local key", newLocalPublicKeys);
+
   localStorage.setItem(
     "public-communication-address",
     JSON.stringify(newLocalPublicKeys)
   );
+  
   localStorage.setItem(
     "private-communication-address",
     JSON.stringify(newLocalPrivateKeys)

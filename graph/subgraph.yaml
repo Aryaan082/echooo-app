@@ -6,7 +6,7 @@ dataSources:
     name: Echo
     network: mumbai
     source:
-      address: "0x21e29E3038AeCC76173103A5cb9711Ced1D23C01"
+      address: "0xb1b7467ae050C9CF91C71d8cb51c6Acc672D5157"
       abi: Echo
     mapping:
       kind: ethereum/events
@@ -21,6 +21,6 @@ dataSources:
       eventHandlers:
         - event: IdentityEvent(string)
           handler: handleIdentityEvent
-        - event: MessageEvent(indexed address,string)
+        - event: MessageEvent(indexed address,string,string)
           handler: handleMessageEvent
       file: ./src/mapping.ts

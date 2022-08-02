@@ -2,20 +2,18 @@
 pragma solidity ^0.8.13;
 
 contract Echo {
-    event MessageEvent(address indexed _receiver, string _message);
-    event IdentityEvent(string _communicationAddress);
+    event MessageEvent(address indexed _receiver, string _senderMessage, string _receiverMessage);
+    event IdentityEvent(string _communicationKey);
 
-    uint256 public test = 1;
-
-    function logMessage(address _receiver, string calldata _message) external {
-        emit MessageEvent(_receiver, _message);
+    function logMessage(address _receiver, string calldata _senderMessage, string calldata _receiverMessage) external {
+        emit MessageEvent(_receiver, _senderMessage, _receiverMessage);
     }
 
-    function logIdentity(string calldata _communicationAddress) external {
+    function logIdentity(string calldata _communicationKey) external {
         // require(
-        //     bytes(_communicationAddress).length == 64,
+        //     bytes(_communicationKey).length == 64,
         //     "Echo: communication address invalid"
         // );
-        emit IdentityEvent(_communicationAddress);
+        emit IdentityEvent(_communicationKey);
     }
 }

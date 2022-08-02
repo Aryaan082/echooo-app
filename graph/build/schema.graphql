@@ -8,7 +8,8 @@ type Identity @entity {
 type Message @entity {
   id: ID!
   receiver: Bytes! # address
-  message: String! # string
+  senderMessage: String! # string
+  receiverMessage: String!
   from: Bytes!
   timestamp: BigInt!
 }

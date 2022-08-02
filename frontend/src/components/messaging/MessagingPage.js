@@ -6,10 +6,9 @@ import {
   useSigner,
   useSwitchNetwork,
 } from "wagmi";
-import { ethers } from "ethers";
 import EthCrypto from "eth-crypto";
 import { createClient } from "urql";
-import EchoJSON from "../../contracts/Echo.sol/Echo.json";
+import { Oval } from "react-loader-spinner";
 import "isomorphic-unfetch"; // required for urql: https://github.com/FormidableLabs/urql/issues/283
 
 import ContractInstances from "../../contracts/ContractInstances";
@@ -22,7 +21,6 @@ import logout from "../../assets/logout-icon.svg";
 import textBubble from "../../assets/text-bubble-icon.svg";
 import selectedAddressEllipse from "../../assets/selected-address-ellipse.png";
 import continueIconColor from "../../assets/continue-icon-color.svg";
-import continueIcon from "../../assets/continue-icon.svg";
 import dropdown from "../../assets/dropdown-icon.svg";
 import logo from "../../assets/echooo.svg";
 import errorIcon from "../../assets/error-icon.svg";
@@ -49,48 +47,88 @@ const initGraphClient = async () => {
 };
 
 // TODO: make into own component once backend logic is complete
-const SendMessagesInterface = ({ receiverAddress, messages, setMessages }) => {
-  const [message, setMessage] = useState("");
-
+const SendMessagesInterface = ({ receiverAddress, messages, setMessageLog, messagesState, setMessagesState }) => {
+  const [senderMessage, setSenderMessage] = useState("");
   const { address } = useAccount();
-
   const echoContract = ContractInstances();
-
+  console.log("messages >>>", messages)
+  console.log("send messages interface >>>", messages)
   const handleSubmitMessage = async (e) => {
     e.preventDefault();
+    setMessagesState({ [receiverAddress]: true })
 
-    const senderMessage = message;
-    const BIdentity = receiverAddress;
+    let senderPublicKey = JSON.parse(localStorage.getItem("public-communication-address"))
+    senderPublicKey = senderPublicKey[address]
 
-    // TODO: If user has no communication address, need to create it on the fly for them... Check if public key exists within cache
-    // TODO: sanitize graphQL queries b/c currently dynamic and exposes injection vulnerability
-    const identitiesQuery = `
+    // TODO: break up into smaller functions
+    const sendMessage = async (receiverAddress, messages) => {
+      // TODO: If user has no communication address, need to create it on the fly for them... Check if public key exists within cache
+      // TODO: sanitize graphQL queries b/c currently dynamic and exposes injection vulnerability
+      const identitiesQuery = `
       query {
-        identities(where: {from: "${BIdentity}"}, first: 1, orderBy: timestamp, orderDirection: desc) {
+        identities(where: {from: "${receiverAddress}"}, first: 1, orderBy: timestamp, orderDirection: desc) {
           communicationAddress,
           timestamp     
         }
       }
     `;
-    const graphClient = await initGraphClient();
-    const data = await graphClient.query(identitiesQuery).toPromise();
-    const communicationAddress = data.data.identities[0].communicationAddress;
+      const graphClient = await initGraphClient();
+      const data = await graphClient.query(identitiesQuery).toPromise();
+      const receieverPublicKey = data.data.identities[0].communicationAddress;
 
-    const messageEncrypted = await EthCrypto.encryptWithPublicKey(
-      communicationAddress,
-      senderMessage
-    );
-    const messageEncryptedString = EthCrypto.cipher.stringify(messageEncrypted);
+      let messageEncryptedSender = await EthCrypto.encryptWithPublicKey(
+        senderPublicKey,
+        senderMessage
+      );
+      let messageEncryptedReceiver = await EthCrypto.encryptWithPublicKey(
+        receieverPublicKey,
+        senderMessage
+      );
+      messageEncryptedSender = EthCrypto.cipher.stringify(messageEncryptedSender);
+      messageEncryptedReceiver = EthCrypto.cipher.stringify(messageEncryptedReceiver);
 
-    await echoContract.logMessage(BIdentity, messageEncryptedString);
-    const newMessage = {
-      from: address,
-      to: receiverAddress,
-      message: senderMessage,
-    };
-    const newMessages = [...messages, newMessage];
-    setMessages(newMessages);
-    setMessage("");
+      const tx = await echoContract.logMessage(receiverAddress, messageEncryptedSender, messageEncryptedReceiver);
+      const txr = await tx.wait();
+      console.log("tx receipt >>>", txr)
+    }
+
+    const newMessageState = { ...messagesState, [receiverAddress]: false }
+    sendMessage(receiverAddress, messages).then(() => {
+      // const newMessagesLog = {...messages, {from: address, to: receiverAddress, }}
+
+      const newReceiverMessageLog = {[receiverAddress]: {...messages[receiverAddress], [messages[receiverAddress].length]: {
+        from: address,        
+        message: senderMessage,
+        timestamp: "1659388729"
+      }}}      
+      console.log("new log >>>", newReceiverMessageLog)
+      const newMessageLog = messages
+      console.log("new message log >>>", newMessageLog)
+      Object.assign(newMessageLog, newReceiverMessageLog);
+      setMessageLog(newMessageLog);
+      console.log("new message log 2.0 >>>", newMessageLog)
+      setMessagesState(newMessageState)
+      
+    }).catch((err) => {
+      console.log("error:", err.message)
+      // TODO: add visual indictation of message failiure
+      const newReceiverMessageLog = {[receiverAddress]: {...messages[receiverAddress], [messages[receiverAddress].length]: {
+        from: address,        
+        message: "message failed...",
+        timestamp: "1659388729"
+      }}}      
+      console.log("new log >>>", newReceiverMessageLog)
+      const newMessageLog = messages
+      console.log("new message log >>>", newMessageLog)
+      Object.assign(newMessageLog, newReceiverMessageLog);
+
+      console.log("new new message log >>>", newMessageLog)
+      setMessageLog(newMessageLog);
+      console.log("new message log 2.0 >>>", newMessageLog)
+      setMessagesState(newMessageState)
+
+    })
+    setSenderMessage("");
   };
 
   return (
@@ -100,8 +138,8 @@ const SendMessagesInterface = ({ receiverAddress, messages, setMessages }) => {
         className="flex flex-row align-center justify-center w-full gap-2 px-4 py-4"
       >
         <input
-          onChange={(e) => setMessage(e.target.value)}
-          value={message}
+          onChange={(event) => setSenderMessage(event.target.value)}
+          value={senderMessage}
           id="sender_message"
           class="drop-shadow-md bg-gray-50 rounded-[30px] text-gray-900 text-md w-full p-4"
           placeholder="Type your message..."
@@ -113,18 +151,31 @@ const SendMessagesInterface = ({ receiverAddress, messages, setMessages }) => {
         >
           <img height="35" width="35" src={plusIcon}></img>
         </button>
-        <button
-          type="submit"
-          class="flex flex-row justify-center items-center gap-[10px] text-white text-lg bg-[#333333] rounded-[30px] hover:bg-[#555555] font-medium px-6"
-        >
-          Send
-          <img className="h-[25px]" src={sendMessagesIcon}></img>
-        </button>
+        {messagesState[receiverAddress] ?
+          <div className="flex flex-col w-[384px] items-center justify-center gap-[20px]">
+            <Oval
+              ariaLabel="loading-indicator"
+              height={40}
+              width={40}
+              strokeWidth={3}
+              strokeWidthSecondary={3}
+              color="black"
+              secondaryColor="white"
+            />
+            <div className="text-xl font-medium">Sending message...</div>
+          </div>
+          : <button
+            type="submit"
+            class="flex flex-row justify-center items-center gap-[10px] text-white text-lg bg-[#333333] rounded-[30px] hover:bg-[#555555] font-medium px-6"
+          >
+            Send
+            <img className="h-[25px]" src={sendMessagesIcon}></img>
+          </button>}
+
       </form>
     </>
   );
 };
-
 export default function MessagingPage({
   toggleOpenModalChainSelect,
   toggleOpenCommAddressModal,
@@ -136,12 +187,14 @@ export default function MessagingPage({
   setActiveIndex,
   communicationAddress,
   setChatAddresses,
+  messagesState,
+  setMessagesState
 }) {
   const { address } = useAccount();
   const { disconnect } = useDisconnect();
   const { chain } = useNetwork();
   const { chains } = useSwitchNetwork();
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessageLog] = useState({});
 
   const handleActiveReceiver = (e, index, address) => {
     setActiveIndex(index);
@@ -150,20 +203,21 @@ export default function MessagingPage({
 
   useEffect(() => {
     // TODO: cache messages
+    // TODO: if messages already populates check if there's new messages, if so append state with new messages, else do not continue
     const getMessagesAsync = async () => {
-      const provider = await new ethers.providers.Web3Provider(window.ethereum);
-      const signer = await provider.getSigner();
-      const localPrivateKey = JSON.parse(
+      const senderAddress = address.toLowerCase();
+      let senderPrivateKey = JSON.parse(
         localStorage.getItem("private-communication-address")
       );
-      const BPublicCommuncationAddress = await signer.getAddress();
-      const BPrivateCommunicationAddress =
-        localPrivateKey[BPublicCommuncationAddress];
-      console.log("BPrivateComm >>", BPrivateCommunicationAddress);
+      senderPrivateKey = senderPrivateKey[address];
+
+      console.log("local private key >>", senderPrivateKey);
+
+      // TODO: query validation using native library to prevent query injection vulnerability
       const identitiesTimestampQuery = `
         query {
           identities(
-            where: {from: "${BPublicCommuncationAddress}"}
+            where: {from: "${senderAddress}"}
             first: 1
             orderBy: timestamp
             orderDirection: desc
@@ -178,60 +232,67 @@ export default function MessagingPage({
         .query(identitiesTimestampQuery)
         .toPromise();
       const dataIdentityTimestamp = dataIdentity.data.identities[0].timestamp;
-      const dataIdentityCommAddress =
-        dataIdentity.data.identities[0].communicationAddress; // TODO: Use this to check that this address matches our comm address
+      const dataIdentityCommAddress = dataIdentity.data.identities[0].communicationAddress; // TODO: Use this to check that this address matches our comm address
       console.log("data timestamp >>>", dataIdentityTimestamp);
+
       const messagesQuery = `
         query {
           messages(            
             orderBy: timestamp
-            orderDirection: desc
+            orderDirection: asc
             where: {
-              from_in: ["${BPublicCommuncationAddress}", "${activeReceiverAddress}"],
-              receiver_in: ["${BPublicCommuncationAddress}", "${activeReceiverAddress}"]
+              from_in: ["${senderAddress}", "${activeReceiverAddress}"],
+              receiver_in: ["${senderAddress}", "${activeReceiverAddress}"]
               timestamp_gte: "${dataIdentityTimestamp}"
             }
         
           ) {
             from
-            message
-            receiver
+            senderMessage
+            receiverMessage
             timestamp
           }
         }
       `;
       const dataMessages = await graphClient.query(messagesQuery).toPromise();
-      // console.log("data messages >>>", dataMessages);
-      // const message = dataMessages.data.messages[0].message;
-      // console.log("message >>>", message)
-      // const decryptedMessage = await EthCrypto.decryptWithPrivateKey(
-      //   BPrivateCommunicationAddress,
-      //   EthCrypto.cipher.parse(message)
-      // );
-      // console.log("decryptedMessage >>>", decryptedMessage)
       const dataMessagesParsed = dataMessages.data.messages;
-      console.log("data messages parsed >>>", dataMessagesParsed);
-      let messages = [];
+      console.log("data messages parsed >>>", dataMessages);
+      const messageLog = dataMessagesParsed;
       for (let idx = 0; idx < dataMessagesParsed.length; idx++) {
-        let message = await dataMessagesParsed[idx].message;
-        // await message.push({ from: BPublicCommuncationAddress });
-        console.log(message);
-        // await messages.push(message);
+        let metaDataMessages = await dataMessagesParsed[idx];
+        let message = "";
+
+        console.log("sender address", senderAddress)
+        console.log("from message", metaDataMessages.from)
+
+        // Decrypt sender message
+        if (metaDataMessages.from === senderAddress) {
+          message = metaDataMessages.senderMessage;
+        } else {
+          // Decrypt receiver message
+          message = metaDataMessages.receiverMessage;
+        }
+
         const decryptedMessage = await EthCrypto.decryptWithPrivateKey(
-          BPrivateCommunicationAddress,
+          senderPrivateKey,
           EthCrypto.cipher.parse(message)
         );
+        messageLog[idx].message = decryptedMessage;
+
         console.log(`Decrypted message ${idx} >>>`, decryptedMessage);
       }
-      // console.log("fetched messages", await messages);
-      // setMessages(messages);
-      // return await messages
+      const newMessageLog = { ...messages, [activeReceiverAddress]: messageLog }
+      setMessageLog(newMessageLog);
+      console.log("message log >>>", newMessageLog)
+      console.log("messages from log >>>", messageLog)
     };
     if (activeReceiverAddress !== "") {
       getMessagesAsync();
     }
   }, [activeReceiverAddress]);
 
+  // TODO: Break this up into a bunch of components, way too much code here
+  // - could do left column, header, and right column as a component
   return (
     <div
       className="flex flex-row h-[100vh] w-[100vw] bg-gradient-bg"
@@ -368,13 +429,15 @@ export default function MessagingPage({
           <div className="flex flex-col">
             <ChatBox
               messages={messages}
-              setMessages={setMessages}
+              setMessageLog={setMessageLog}
               receiverAddress={activeReceiverAddress}
             />
             <SendMessagesInterface
               messages={messages}
-              setMessages={setMessages}
+              setMessageLog={setMessageLog}
               receiverAddress={activeReceiverAddress}
+              messagesState={messagesState}
+              setMessagesState={setMessagesState}
             />
           </div>
         ) : (

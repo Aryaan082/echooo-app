@@ -21,6 +21,6 @@ dataSources:
       eventHandlers:
         - event: IdentityEvent(string)
           handler: handleIdentityEvent
-        - event: MessageEvent(indexed address,string)
+        - event: MessageEvent(indexed address,string,string)
           handler: handleMessageEvent
       file: ./src/mapping.ts

@@ -24,7 +24,13 @@
       {
         "indexed": false,
         "internalType": "string",
-        "name": "_message",
+        "name": "_senderMessage",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "_receiverMessage",
         "type": "string"
       }
     ],
@@ -53,7 +59,12 @@
       },
       {
         "internalType": "string",
-        "name": "_message",
+        "name": "_senderMessage",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_receiverMessage",
         "type": "string"
       }
     ],

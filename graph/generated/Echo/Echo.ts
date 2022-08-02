@@ -45,8 +45,12 @@ export class MessageEvent__Params {
     return this._event.parameters[0].value.toAddress();
   }
 
-  get _message(): string {
+  get _senderMessage(): string {
     return this._event.parameters[1].value.toString();
+  }
+
+  get _receiverMessage(): string {
+    return this._event.parameters[2].value.toString();
   }
 }
 
@@ -107,8 +111,12 @@ export class LogMessageCall__Inputs {
     return this._call.inputValues[0].value.toAddress();
   }
 
-  get _message(): string {
+  get _senderMessage(): string {
     return this._call.inputValues[1].value.toString();
+  }
+
+  get _receiverMessage(): string {
+    return this._call.inputValues[2].value.toString();
   }
 }
 

@@ -16,7 +16,8 @@ export function handleMessageEvent(event: MessageEvent): void {
     event.transaction.hash.toHex() + "-" + event.logIndex.toString()
   );
   entity.receiver = event.params._receiver;
-  entity.message = event.params._message;
+  entity.senderMessage = event.params._senderMessage;
+  entity.receiverMessage = event.params._receiverMessage;
   entity.timestamp = event.block.timestamp;
   entity.from = event.transaction.from;
   entity.save();

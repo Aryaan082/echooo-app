@@ -1,4 +1,3 @@
-// import * as dotenv from "dotenv";
 import React, { useEffect, useState } from "react";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import WalletModal from "./wallet/WalletModal";
@@ -11,7 +10,7 @@ import gradientOne from "../assets/gradient-one.svg";
 import gradientTwo from "../assets/gradient-two.svg";
 import logo from "../assets/echooo.svg";
 
-// dotenv.config();
+const BURNER_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 export default function App() {
   const [connectedWallet, setConnectedWallet] = useState(false);
@@ -21,9 +20,10 @@ export default function App() {
   const [openCommAddressModal, setOpenCommAddressModal] = useState(false);
   const [newChatAddress, setNewChatAddress] = useState("");
   const [activeReceiverAddress, setActiveReceiver] = useState(
-    "0x0000000000000000000000000000000000000000"
+    BURNER_ADDRESS
   );
-  const [broadcasting, setBroadcasting] = React.useState(false);
+  const [broadcasting, setBroadcasting] = useState(false);
+  const [messagesState, setMessagesState] = useState({})
   const [chatAddresses, setChatAddresses] = useState(
     JSON.parse(localStorage.getItem("chats")) || []
   );
@@ -124,6 +124,8 @@ export default function App() {
             setActiveReceiver={setActiveReceiver}
             communicationAddress={communicationAddress}
             setChatAddresses={setChatAddresses}
+            messagesState={messagesState}
+            setMessagesState={setMessagesState}
           />
         </div>
       )}

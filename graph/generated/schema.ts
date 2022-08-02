@@ -110,13 +110,22 @@ export class Message extends Entity {
     this.set("receiver", Value.fromBytes(value));
   }
 
-  get message(): string {
-    let value = this.get("message");
+  get senderMessage(): string {
+    let value = this.get("senderMessage");
     return value!.toString();
   }
 
-  set message(value: string) {
-    this.set("message", Value.fromString(value));
+  set senderMessage(value: string) {
+    this.set("senderMessage", Value.fromString(value));
+  }
+
+  get receiverMessage(): string {
+    let value = this.get("receiverMessage");
+    return value!.toString();
+  }
+
+  set receiverMessage(value: string) {
+    this.set("receiverMessage", Value.fromString(value));
   }
 
   get from(): Bytes {
